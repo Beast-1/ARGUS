@@ -1725,6 +1725,19 @@ def main():
         help="Optional path to write a JSON batch report (only used with --batch-file).",
     )
     parser.add_argument(
+        "--no-concept",
+        action="store_true",
+        help="Skip reference-image generation and build straight from the prompt. "
+             "Exposed for ablation runs (eval/conditions.py); the concept image is "
+             "on by default.",
+    )
+    parser.add_argument(
+        "--poly-budget",
+        type=str,
+        choices=sorted(VALID_POLY_BUDGETS),
+        help="Override the planner's polygon budget.",
+    )
+    parser.add_argument(
         "--audit",
         action="store_true",
         help="Inspect every asset in out/final with ARGUS's own validators and report pass/fail.",
@@ -1769,7 +1782,9 @@ def main():
 
     success = run_pipeline(
         prompt=prompt,
+        poly_budget=args.poly_budget,
         mcp_mode=args.mcp,
+        use_concept_pipeline=not args.no_concept,
     )
 
     sys.exit(0 if success else 1)

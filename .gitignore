@@ -18,3 +18,6 @@ app/src-tauri/target/
 # Build artifacts
 build/
 dist/
+
+# Eval sweep artifacts (results are committed; generated assets are not)
+eval/out/

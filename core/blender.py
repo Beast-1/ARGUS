@@ -27,7 +27,14 @@ BLENDER_PATH: str = os.getenv("BLENDER_PATH", "blender")
 
 BLENDER_EXEC_TIMEOUT: int = int(os.getenv("BLENDER_EXEC_TIMEOUT", "300"))
 BLENDER_MCP_TIMEOUT: int = int(os.getenv("BLENDER_MCP_TIMEOUT", "120"))
-ARGUS_OUT_ROOT: Path = Path(os.getenv("ARGUS_OUT_ROOT", "out"))
+# Prefer ARGUS_OUTPUT_ROOT — the name main.py:77 uses. This module previously read
+# only ARGUS_OUT_ROOT, so setting the documented variable moved main.py's output but
+# NOT the Blender exports, silently splitting a run across two directories. The legacy
+# name still works. Read at import time, so a per-run output directory must be set
+# before this module is imported (i.e. one process per run — see eval/runner.py).
+ARGUS_OUT_ROOT: Path = Path(
+    os.getenv("ARGUS_OUTPUT_ROOT") or os.getenv("ARGUS_OUT_ROOT") or "out"
+)
 ARGUS_MAX_REPAIRS: int = int(os.getenv("ARGUS_MAX_REPAIRS", "4"))
 ARGUS_SEED: int = int(os.getenv("ARGUS_SEED", "42"))
 

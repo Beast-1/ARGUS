@@ -1,0 +1,32 @@
+{"id":"b01","prompt":"a wooden crate","tier":"simple","category":"container","parts_expected":"slats, corner posts","notes":"canonical box prop; in structure library"}
+{"id":"b02","prompt":"a steel oil drum","tier":"simple","category":"container","parts_expected":"cylindrical body, rolling hoops, lid","notes":"lathe/cylinder form"}
+{"id":"b03","prompt":"a traffic cone","tier":"simple","category":"street","parts_expected":"tapered cone, square base","notes":"tests taper directly"}
+{"id":"b04","prompt":"a cardboard shipping box","tier":"simple","category":"container","parts_expected":"box body, folded flaps","notes":"near-pure prism; low ceiling"}
+{"id":"b05","prompt":"a concrete cinder block","tier":"simple","category":"construction","parts_expected":"block body, two voids","notes":"needs subtraction; currently unsupported"}
+{"id":"b06","prompt":"a wooden pallet","tier":"simple","category":"logistics","parts_expected":"deck boards, stringers, blocks","notes":"repetition/array test"}
+{"id":"b07","prompt":"a metal jerrycan","tier":"simple","category":"container","parts_expected":"body, X-embossing, spout, handle","notes":"embossing needs surface detail"}
+{"id":"b08","prompt":"a ceramic flower pot","tier":"simple","category":"household","parts_expected":"tapered body, rim lip","notes":"lathe + taper"}
+
+{"id":"b09","prompt":"a cast iron fire hydrant","tier":"moderate","category":"street","parts_expected":"barrel, bonnet, two side caps, chain","notes":"golden blueprint exists"}
+{"id":"b10","prompt":"a rustic park bench","tier":"moderate","category":"furniture","parts_expected":"slats, cast iron legs, armrests","notes":"golden blueprint exists"}
+{"id":"b11","prompt":"a fire extinguisher","tier":"moderate","category":"safety","parts_expected":"cylinder, handle, hose, gauge","notes":"golden blueprint; hose needs tube"}
+{"id":"b12","prompt":"a street lamp post","tier":"moderate","category":"street","parts_expected":"base, tapered pole, lantern head","notes":"golden blueprint; tall thin form"}
+{"id":"b13","prompt":"a wooden step stool","tier":"moderate","category":"furniture","parts_expected":"two steps, four splayed legs","notes":"splayed legs need rotation + taper"}
+{"id":"b14","prompt":"a metal storage cabinet","tier":"moderate","category":"furniture","parts_expected":"carcass, two doors, handles, plinth","notes":"known failure: floating rods"}
+{"id":"b15","prompt":"a hand cart with two wheels","tier":"moderate","category":"logistics","parts_expected":"bed, frame, two wheels, handles","notes":"scored 2/10 in the original benchmark"}
+{"id":"b16","prompt":"a round wooden dining table","tier":"moderate","category":"furniture","parts_expected":"circular top, apron, four legs","notes":"golden blueprint exists"}
+{"id":"b17","prompt":"a padded office chair","tier":"moderate","category":"furniture","parts_expected":"seat, back, armrests, gas lift, castors","notes":"needs smooth/crease for cushions"}
+{"id":"b18","prompt":"a wall-mounted mailbox","tier":"moderate","category":"street","parts_expected":"body, hinged flap, mounting plate","notes":"articulation implied, not required"}
+{"id":"b19","prompt":"a mechanic's rolling tool chest","tier":"moderate","category":"furniture","parts_expected":"carcass, stacked drawers, castors","notes":"drawer repetition"}
+{"id":"b20","prompt":"a ceramic coffee mug","tier":"moderate","category":"household","parts_expected":"hollow body, handle, foot ring","notes":"known failure: mangled handle; needs fuse"}
+
+{"id":"b21","prompt":"a steam locomotive engine","tier":"complex","category":"vehicle","parts_expected":"boiler, chimney, domes, driving wheels, cab","notes":"known failure: rendered solid black"}
+{"id":"b22","prompt":"a wooden windmill","tier":"complex","category":"structure","parts_expected":"tapered tower, cap, four sails, gallery","notes":"radial array + taper"}
+{"id":"b23","prompt":"an anglepoise desk lamp","tier":"complex","category":"household","parts_expected":"base, two hinged arms, springs, shade","notes":"articulated linkage; hard for absolute coords"}
+{"id":"b24","prompt":"a vintage gas pump","tier":"complex","category":"street","parts_expected":"housing, display, hose, nozzle, globe","notes":"curved hose via tube"}
+{"id":"b25","prompt":"a wheelbarrow","tier":"complex","category":"logistics","parts_expected":"tapered tray, single wheel, two handles, legs","notes":"tray is a non-prismatic shell"}
+{"id":"b26","prompt":"a bicycle","tier":"complex","category":"vehicle","parts_expected":"frame triangles, two wheels, bars, seat, chain","notes":"thin-tube topology; classic hard case"}
+{"id":"b27","prompt":"a rope-and-plank rope bridge section","tier":"complex","category":"structure","parts_expected":"planks, catenary ropes, posts","notes":"catenary curve; tests tube paths"}
+{"id":"b28","prompt":"an old ship's anchor","tier":"complex","category":"marine","parts_expected":"shank, curved arms, flukes, stock, ring","notes":"organic curvature; compiler weak spot"}
+{"id":"b29","prompt":"a medieval wooden treasure chest","tier":"complex","category":"container","parts_expected":"body, curved barrel lid, iron bands, lock","notes":"curved lid needs lathe/arc"}
+{"id":"b30","prompt":"a park drinking fountain","tier":"complex","category":"street","parts_expected":"pedestal, basin, spout, push button","notes":"basin is a hollowed vessel"}
