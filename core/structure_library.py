@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import time
 from dataclasses import dataclass
@@ -1695,11 +1696,14 @@ def _strict_memory_gate(
         if int(mcp_report.get(key, 0) or 0) != 0:
             return False, f"{key} is non-zero"
     # Clean topology is necessary but not sufficient: a wrongly-proportioned
-    # build can still be manifold. Require a decent vision score when one is
-    # available (-1 / absent means visual QA was skipped — don't block then).
+    # build can still be manifold. Require a vision score at the pipeline's own
+    # quality bar (-1 / absent means visual QA was skipped — don't block then).
+    # Follows ARGUS_VISUAL_TARGET so memory only learns from assets that meet
+    # the current bar, not a stale hardcoded one.
+    _bar = int(os.environ.get("ARGUS_VISUAL_TARGET", "7"))
     vscore = quality.get("visual_score")
-    if vscore is not None and 0 <= int(vscore) < 7:
-        return False, f"visual score {int(vscore)}/10 below memory threshold (7)"
+    if vscore is not None and 0 <= int(vscore) < _bar:
+        return False, f"visual score {int(vscore)}/10 below memory threshold ({_bar})"
     return True, "strict success"
 
 
