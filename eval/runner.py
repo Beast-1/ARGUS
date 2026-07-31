@@ -55,6 +55,15 @@ def load_benchmark(tier: str | None = None, only: set[str] | None = None) -> lis
 
 
 def completed_cells(results_path: Path) -> set[tuple[str, str]]:
+    """Cells that don't need to run again.
+
+    A cell that failed because of the environment (network/DNS down, a provider
+    outage — see _ENV_FAILURE_SIGNATURES) is deliberately NOT counted as done: it
+    produced no usable measurement, so simply re-running the same command retries
+    exactly those cells and nothing else. This is what a 15-cell sweep needed after
+    a mid-run network outage silently turned 13 cells into meaningless score=None
+    records — resuming should have been one command, not a manual diagnosis.
+    """
     if not results_path.exists():
         return set()
     done = set()
@@ -66,11 +75,29 @@ def completed_cells(results_path: Path) -> set[tuple[str, str]]:
             rec = json.loads(line)
         except ValueError:
             continue  # a partially written final line; it will simply be re-run
+        if rec.get("env_failure"):
+            continue
         done.add((rec["condition"], rec["prompt_id"]))
     return done
 
 
-def run_cell(item: dict, condition: str, out_root: Path, timeout: int) -> dict:
+# Substrings that mean "the environment failed the run", not "the model produced a
+# bad asset". A sweep is often unattended for hours; a mid-sweep network outage or
+# quota exhaustion must not silently masquerade as a quality result — this exact
+# failure mode corrupted 13 of 15 cells in the first real sweep (a DNS outage from
+# ~20:01 onward made every provider fail, and every cell after it recorded a
+# meaningless score=None indistinguishable from "the model tried and produced
+# nothing"). Matched against the full log, not just the 4000-char tail, so a long
+# retry storm before the final failure doesn't push the signature out of range.
+_ENV_FAILURE_SIGNATURES = [
+    "NameResolutionError", "getaddrinfo failed", "Failed to resolve",
+    "Max retries exceeded", "ConnectionError", "ConnectionResetError",
+    "Temporary failure in name resolution",
+]
+
+
+def run_cell(item: dict, condition: str, out_root: Path, timeout: int,
+            log_dir: Path | None = None) -> dict:
     """One (prompt, condition) generation, fully isolated."""
     env = dict(os.environ)
     env.update(env_for(condition))
@@ -86,18 +113,30 @@ def run_cell(item: dict, condition: str, out_root: Path, timeout: int) -> dict:
     t0 = time.monotonic()
     timed_out = False
     returncode = -1
-    log_tail = ""
+    full_log = ""
     try:
         proc = subprocess.run(
             cmd, cwd=REPO, env=env, timeout=timeout,
             capture_output=True, text=True, errors="replace",
         )
         returncode = proc.returncode
-        log_tail = (proc.stdout or "")[-4000:]
+        full_log = proc.stdout or ""
     except subprocess.TimeoutExpired as exc:
         timed_out = True
-        log_tail = (exc.stdout or b"").decode("utf-8", "replace")[-4000:] if exc.stdout else ""
+        full_log = (exc.stdout or b"").decode("utf-8", "replace") if exc.stdout else ""
     elapsed = round(time.monotonic() - t0, 1)
+
+    # Full stdout is kept on disk, not in the JSON record — a 15-cell sweep would
+    # otherwise put megabytes of log text in runs.jsonl. This is what made
+    # diagnosing the network outage above require a slow manual repro; it will not
+    # next time.
+    if log_dir is not None:
+        log_dir.mkdir(parents=True, exist_ok=True)
+        log_path = log_dir / f"{condition}__{item['id']}.log"
+        log_path.write_text(full_log, encoding="utf-8", errors="replace")
+
+    env_failure = next((s for s in _ENV_FAILURE_SIGNATURES if s in full_log), None)
+    log_tail = full_log[-4000:]
 
     record = {
         "prompt_id": item["id"],
@@ -109,6 +148,7 @@ def run_cell(item: dict, condition: str, out_root: Path, timeout: int) -> dict:
         "returncode": returncode,
         "timed_out": timed_out,
         "rejected": "[ARGUS] Request rejected:" in log_tail,
+        "env_failure": env_failure,  # e.g. "NameResolutionError" — see above
     }
 
     asset = _find_asset(out_root, log_tail)
@@ -145,6 +185,8 @@ def main() -> int:
     ap.add_argument("--timeout", type=int, default=2100, help="per-cell seconds")
     ap.add_argument("--results", default=str(RESULTS_DIR / "runs.jsonl"))
     ap.add_argument("--out-root", default=str(REPO / "eval" / "out"))
+    ap.add_argument("--log-dir", default=str(RESULTS_DIR / "logs"),
+                    help="full per-cell stdout, one file per (condition, prompt_id)")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--list", action="store_true", help="list conditions and exit")
     args = ap.parse_args()
@@ -188,14 +230,19 @@ def main() -> int:
         out_root = Path(args.out_root) / cond
         out_root.mkdir(parents=True, exist_ok=True)
         print(f"\n[{n}/{len(cells)}] {cond} :: {it['id']} :: {it['prompt'][:60]}", flush=True)
-        record = run_cell(it, cond, out_root, args.timeout)
+        record = run_cell(it, cond, out_root, args.timeout, log_dir=Path(args.log_dir))
         # Append immediately so an interrupted sweep loses at most one cell.
         with results_path.open("a", encoding="utf-8") as fh:
             fh.write(json.dumps(record) + "\n")
-        print(f"    -> score={record.get('visual_score')} "
-              f"sev={record.get('topology_severity')} "
-              f"tex={record.get('textured_materials')} "
-              f"tris={record.get('triangles')} {record['elapsed_sec']}s", flush=True)
+        if record.get("env_failure"):
+            print(f"    !! ENVIRONMENT FAILURE ({record['env_failure']}) — not a "
+                  f"quality result, will retry on next invocation. "
+                  f"Full log: {args.log_dir}/{cond}__{it['id']}.log", flush=True)
+        else:
+            print(f"    -> score={record.get('visual_score')} "
+                  f"sev={record.get('topology_severity')} "
+                  f"tex={record.get('textured_materials')} "
+                  f"tris={record.get('triangles')} {record['elapsed_sec']}s", flush=True)
     return 0
 
 

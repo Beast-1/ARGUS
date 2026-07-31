@@ -19,6 +19,7 @@ from eval.metrics import summarise  # noqa: E402
 DEFAULT_RESULTS = Path(__file__).parent / "results" / "runs.jsonl"
 
 COLUMNS = [
+    ("n_env_failures", "envFail"),
     ("n_built", "built"),
     ("build_rate", "build%"),
     ("mean_visual_score", "score"),

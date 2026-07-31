@@ -160,8 +160,17 @@ def _shape_vocabulary(run_dir: Path, m: AssetMetrics) -> None:
 
 
 def summarise(records: list[dict]) -> dict:
-    """Aggregate a set of per-asset metric dicts into headline numbers."""
-    done = [r for r in records if r.get("exists")]
+    """Aggregate a set of per-asset metric dicts into headline numbers.
+
+    Records with env_failure set (network/provider outage — see runner.py) are
+    excluded entirely, not counted as failed attempts: they measure the network,
+    not the model. Silently including them previously turned a mid-sweep DNS
+    outage into an apparent quality collapse.
+    """
+    usable = [r for r in records if not r.get("env_failure")]
+    n_env_failures = len(records) - len(usable)
+
+    done = [r for r in usable if r.get("exists")]
     scored = [r for r in done if isinstance(r.get("visual_score"), int)]
     sev = [r.get("topology_severity") for r in done if r.get("topology_severity")]
 
@@ -169,9 +178,10 @@ def summarise(records: list[dict]) -> dict:
         return round(sum(values) / len(values), 2) if values else None
 
     return {
-        "n_attempted": len(records),
+        "n_attempted": len(usable),
+        "n_env_failures": n_env_failures,
         "n_built": len(done),
-        "build_rate": round(len(done) / len(records), 3) if records else None,
+        "build_rate": round(len(done) / len(usable), 3) if usable else None,
         "mean_visual_score": mean([r["visual_score"] for r in scored]),
         "pct_at_or_above_7": (
             round(100 * sum(1 for r in scored if r["visual_score"] >= 7) / len(scored))
@@ -188,7 +198,7 @@ def summarise(records: list[dict]) -> dict:
             if done else None
         ),
         "mean_triangles": mean([r["triangles"] for r in done]),
-        "mean_elapsed_sec": mean([r["elapsed_sec"] for r in records if r.get("elapsed_sec")]),
+        "mean_elapsed_sec": mean([r["elapsed_sec"] for r in usable if r.get("elapsed_sec")]),
         "taper_uptake_boxes": _uptake(done, "boxes_tapered", "boxes"),
         "taper_uptake_cylinders": _uptake(done, "cylinders_tapered", "cylinders"),
     }
