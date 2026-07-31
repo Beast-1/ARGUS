@@ -1,0 +1,10 @@
+out/
+logs/
+__pycache__/
+*.pyc
+.venv/
+.git/
+build/
+dist/
+*.spec
+docs/

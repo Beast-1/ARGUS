@@ -1,0 +1,35 @@
+.top-nav {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+  border-bottom: 1px solid var(--line);
+  position: relative;
+}
+
+.top-nav-brand {
+  position: absolute;
+  left: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.top-nav-brand b {
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.top-nav a {
+  font-size: 11.5px;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+
+.top-nav a.current,
+.top-nav a:hover {
+  color: var(--text);
+}

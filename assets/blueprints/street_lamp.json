@@ -1,0 +1,20 @@
+{
+  "name": "street_lamp",
+  "keywords": ["street", "lamp", "lamppost", "light", "post", "pole", "lantern", "victorian"],
+  "description": "street lamp: lathe base, tall pole, curved tube arm, glowing head",
+  "notes": [
+    "Note the flared base is a lathe, the curved arm is ONE tube path, and the glass head is a separate emissive-looking material."
+  ],
+  "materials_palette": {
+    "iron": {"color": [0.07, 0.08, 0.09], "metallic": 0.85, "roughness": 0.5},
+    "glass": {"color": [0.95, 0.90, 0.65], "metallic": 0.0, "roughness": 0.2}
+  },
+  "scene_graph": [
+    {"name": "base", "primitive": "lathe", "profile": [[0.22, 0.0], [0.18, 0.08], [0.10, 0.18], [0.06, 0.30]], "pos": [0, 0, 0], "material": "iron", "attach_to": ""},
+    {"name": "pole", "primitive": "cylinder", "axis": "Z", "radius": 0.05, "depth": 2.6, "pos": [0, 0, 1.6], "material": "iron", "attach_to": "base"},
+    {"name": "arm", "primitive": "tube", "radius": 0.035, "path": [[0, 0, 2.88], [0, 0.25, 3.05], [0, 0.55, 3.0]], "pos": [0, 0, 0], "material": "iron", "attach_to": "pole"},
+    {"name": "lamp_head", "primitive": "sphere", "size": [0.25, 0.25, 0.3], "pos": [0, 0.55, 2.88], "material": "glass", "attach_to": "arm"},
+    {"name": "head_cap", "primitive": "cylinder", "axis": "Z", "radius": 0.09, "depth": 0.06, "pos": [0, 0.55, 3.04], "material": "iron", "attach_to": "lamp_head"},
+    {"name": "base_bolt", "primitive": "bolt", "radius": 0.015, "height": 0.025, "pos": [0.17, 0, 0.02], "material": "iron", "attach_to": "base", "array": {"type": "ring", "count": 4, "ring_radius": 0.17, "z": 0.02}}
+  ]
+}

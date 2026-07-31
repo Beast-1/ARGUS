@@ -1,0 +1,22 @@
+{
+  "name": "fire_extinguisher",
+  "keywords": ["extinguisher", "fire", "tank", "cylinder", "safety", "emergency"],
+  "description": "fire extinguisher: closed lathe tank, lever handles, tube hose",
+  "notes": [
+    "Note the tank is ONE lathe whose profile starts and ends at radius 0 (closed top and bottom), and the hose is ONE tube path down the side."
+  ],
+  "materials_palette": {
+    "red": {"color": [0.72, 0.08, 0.06], "metallic": 0.2, "roughness": 0.45},
+    "steel": {"color": [0.65, 0.66, 0.68], "metallic": 0.9, "roughness": 0.3},
+    "rubber": {"color": [0.05, 0.05, 0.05], "metallic": 0.0, "roughness": 0.85}
+  },
+  "scene_graph": [
+    {"name": "tank", "primitive": "lathe", "profile": [[0.0, 0.0], [0.085, 0.012], [0.09, 0.1], [0.09, 0.5], [0.07, 0.56], [0.035, 0.6], [0.0, 0.62]], "pos": [0, 0, 0], "material": "red", "attach_to": ""},
+    {"name": "neck", "primitive": "cylinder", "axis": "Z", "radius": 0.03, "depth": 0.06, "pos": [0, 0, 0.64], "material": "steel", "attach_to": "tank"},
+    {"name": "carry_handle", "primitive": "box", "size": [0.03, 0.16, 0.018], "pos": [0, 0.02, 0.70], "material": "steel", "attach_to": "neck"},
+    {"name": "squeeze_lever", "primitive": "box", "size": [0.03, 0.15, 0.014], "pos": [0, 0.025, 0.73], "rot": [-8, 0, 0], "material": "steel", "attach_to": "carry_handle"},
+    {"name": "hose", "primitive": "tube", "radius": 0.012, "path": [[0.03, 0, 0.62], [0.11, 0, 0.45], [0.10, 0, 0.2], [0.13, 0, 0.1]], "pos": [0, 0, 0], "material": "rubber", "attach_to": "neck"},
+    {"name": "nozzle", "primitive": "cylinder", "axis": "Z", "radius": 0.022, "depth": 0.07, "r_top": 0.012, "pos": [0.13, 0, 0.07], "material": "rubber", "attach_to": "hose"},
+    {"name": "pressure_gauge", "primitive": "cylinder", "axis": "Y", "radius": 0.025, "depth": 0.02, "pos": [0, 0.04, 0.66], "material": "steel", "attach_to": "neck"}
+  ]
+}

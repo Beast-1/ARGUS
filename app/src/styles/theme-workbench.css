@@ -1,0 +1,28 @@
+/* Workbench — flat "instrument panel" palette, the direct continuation of the original
+   Tkinter app's charcoal + violet identity (cross-referenced against desktop_app.py's
+   THEME dict).
+
+   Shares the semantic token names --bg/--text/--muted/--line with theme-reveal.css so
+   shared components render correctly under either theme; the panel/dock/dim tokens
+   below are Workbench-specific chrome. --accent lives in tokens.css (brand, global). */
+.theme-workbench {
+  --bg: #0f0f11;
+  --text: #e7e7ea;
+  --muted: #8d8d94;
+  --line: #2b2b2f;
+
+  --panel: #161618;
+  --panel-2: #1c1c1f;
+  --dock: #131315;
+  --line-soft: #232326;
+  --dim: #57575e;
+  --surface: #0a0a0a;
+  --grid-line: #101012;   /* viewport graph-paper backdrop */
+  --grid-bg: #0c0c0e;
+
+  --accent-text: #c6b3fb;
+
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+}

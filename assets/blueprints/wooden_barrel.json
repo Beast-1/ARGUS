@@ -1,0 +1,18 @@
+{
+  "name": "wooden_barrel",
+  "keywords": ["barrel", "keg", "cask", "drum", "wine", "whiskey", "container"],
+  "description": "wooden barrel: ONE bulged lathe body plus two iron hoop rings",
+  "notes": [
+    "Note how the whole staved body is ONE lathe profile (bulge in the middle) — never a stack of cylinders — and the hoops are rings."
+  ],
+  "materials_palette": {
+    "wood": {"color": [0.42, 0.27, 0.14], "metallic": 0.0, "roughness": 0.75},
+    "iron": {"color": [0.12, 0.12, 0.13], "metallic": 0.9, "roughness": 0.4}
+  },
+  "scene_graph": [
+    {"name": "body", "primitive": "lathe", "profile": [[0.26, 0.0], [0.30, 0.15], [0.32, 0.45], [0.30, 0.75], [0.26, 0.9], [0.0, 0.9]], "pos": [0, 0, 0], "material": "wood", "attach_to": ""},
+    {"name": "hoop_low", "primitive": "ring", "radius": 0.305, "thickness": 0.015, "axis": "Z", "pos": [0, 0, 0.18], "material": "iron", "attach_to": "body"},
+    {"name": "hoop_high", "primitive": "ring", "radius": 0.305, "thickness": 0.015, "axis": "Z", "pos": [0, 0, 0.72], "material": "iron", "attach_to": "body"},
+    {"name": "bung", "primitive": "cylinder", "axis": "Z", "radius": 0.035, "depth": 0.03, "pos": [0, 0, 0.91], "material": "iron", "attach_to": "body"}
+  ]
+}

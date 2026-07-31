@@ -1,0 +1,37 @@
+/* Shared primitives — font stacks, radii, brand accent, semantic status colours.
+   Palette lives in theme-workbench.css / theme-reveal.css, which map the SAME semantic
+   token names (--bg/--text/--muted/--line) to their own values, so shared components
+   style against those names and render correctly under either theme. */
+:root {
+  --sans: "Segoe UI", "Segoe UI Semibold", system-ui, -apple-system, sans-serif;
+  --sans-light: "Segoe UI Light", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: "Cascadia Code", "Consolas", monospace;
+
+  --radius-s: 2px;
+  --radius-m: 6px;
+  --radius-pill: 999px;
+
+  /* Brand accent — global, not per-theme: the ARGUS mark is the one element that
+     must read identically in Workbench's charcoal and Reveal's black. */
+  --accent: #8b5cf6;
+  --accent-deep: #5b3aa8;
+  --accent-soft: #a996e8;
+
+  --success: #4ade80;
+  --warning: #f5b942;
+  --danger: #f2716a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+}

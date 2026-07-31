@@ -1,0 +1,17 @@
+.asset-card {
+  cursor: pointer;
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+  font-family: inherit;
+  color: inherit;
+}
+
+.asset-card-name {
+  margin-top: 12px;
+  font-size: 13.5px;
+  font-weight: 500;
+}

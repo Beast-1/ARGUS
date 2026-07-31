@@ -1,0 +1,15 @@
+.argus-logo {
+  display: inline-flex;
+  gap: 2px;
+  align-items: flex-end;
+}
+
+.argus-logo i {
+  width: 3px;
+  display: block;
+  background: var(--accent);
+}
+
+.argus-logo i:nth-child(1) { height: 7px; background: var(--accent-deep); }
+.argus-logo i:nth-child(2) { height: 12px; }
+.argus-logo i:nth-child(3) { height: 9px; background: var(--accent-soft); }

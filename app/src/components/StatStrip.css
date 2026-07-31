@@ -1,0 +1,30 @@
+.stat-strip {
+  display: grid;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.stat-strip-item {
+  padding: 18px 4px;
+  text-align: center;
+  border-right: 1px solid var(--line);
+}
+
+.stat-strip-item:last-child {
+  border-right: none;
+}
+
+.stat-strip-n {
+  font-family: var(--sans-light);
+  font-weight: 200;
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-strip-l {
+  margin-top: 4px;
+  font-size: 10.5px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+}

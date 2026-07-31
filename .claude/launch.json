@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "argus-arch",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["http-server", "C:\\Users\\darpa\\Desktop\\presentation", "-p", "3456", "--cors"],
+      "port": 3456
+    },
+    {
+      "name": "portfolio",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "C:\\Users\\darpa\\Desktop\\portfolio", "run", "dev", "--", "--port", "5174", "--strictPort"],
+      "port": 5174
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "fire_hydrant",
+  "keywords": ["fire", "hydrant", "valve", "water", "street", "red"],
+  "description": "fire hydrant: lathe body, mirrored valves, ring-array bolts",
+  "notes": [
+    "Note how the round body is ONE lathe (not stacked cylinders), the two side valves are ONE node with mirror, and the 8 flange bolts are ONE node with a ring array."
+  ],
+  "materials_palette": {
+    "body": {"color": [0.75, 0.10, 0.08], "metallic": 0.3, "roughness": 0.5},
+    "iron": {"color": [0.08, 0.08, 0.09], "metallic": 0.9, "roughness": 0.4}
+  },
+  "scene_graph": [
+    {"name": "barrel", "primitive": "lathe", "profile": [[0.16, 0.0], [0.14, 0.1], [0.13, 0.55], [0.15, 0.6]], "pos": [0, 0, 0], "material": "body", "attach_to": ""},
+    {"name": "dome", "primitive": "sphere", "size": [0.3, 0.3, 0.22], "pos": [0, 0, 0.65], "material": "body", "attach_to": "barrel"},
+    {"name": "side_valve", "primitive": "cylinder", "axis": "X", "radius": 0.05, "depth": 0.12, "pos": [0.18, 0, 0.35], "material": "iron", "attach_to": "barrel", "mirror": "X"},
+    {"name": "top_nut", "primitive": "bolt", "radius": 0.04, "height": 0.05, "pos": [0, 0, 0.78], "material": "iron", "attach_to": "dome"},
+    {"name": "chain", "primitive": "tube", "radius": 0.012, "path": [[0.14, 0, 0.45], [0.2, 0, 0.3], [0.17, 0, 0.18]], "pos": [0, 0, 0], "material": "iron", "attach_to": "barrel"},
+    {"name": "flange_bolt", "primitive": "bolt", "radius": 0.012, "height": 0.02, "pos": [0.15, 0, 0.58], "material": "iron", "attach_to": "barrel", "array": {"type": "ring", "count": 8, "ring_radius": 0.15, "z": 0.58}}
+  ]
+}

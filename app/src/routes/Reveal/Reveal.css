@@ -1,0 +1,150 @@
+/* Apple product-page language: large light headline, one hero object, spec strip.
+   Deliberately the opposite density to Workbench — this is a moment, not a tool. */
+
+.reveal {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.reveal-status {
+  padding: 60px 40px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.reveal-status-error { color: var(--danger); }
+
+.reveal-hero {
+  padding: 66px 24px 0;
+  text-align: center;
+}
+
+.reveal-eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 18px;
+}
+
+.reveal-headline {
+  font-family: var(--sans-light);
+  font-weight: 300;
+  font-size: 54px;
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+  margin: 0 auto;
+  max-width: 820px;
+  text-wrap: balance;
+}
+
+.reveal-headline b { font-weight: 600; }
+
+.reveal-sub {
+  margin: 22px auto 0;
+  max-width: 560px;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.reveal-sub q { font-style: italic; quotes: "\201C" "\201D"; }
+
+.reveal-stage {
+  position: relative;
+  flex: 1;
+  min-height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 26px;
+}
+
+.reveal-spot {
+  position: absolute;
+  top: -40px;
+  width: 640px;
+  max-width: 90vw;
+  height: 420px;
+  background: radial-gradient(
+    ellipse at 50% 0%,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0) 62%
+  );
+  pointer-events: none;
+}
+
+.reveal-shadow {
+  position: absolute;
+  bottom: 44px;
+  width: 220px;
+  height: 34px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0) 72%);
+}
+
+.reveal-asset-wrap {
+  position: relative;
+  z-index: 1;
+  animation: reveal-float 5s ease-in-out infinite;
+}
+
+.reveal-asset-img {
+  display: block;
+  max-width: 400px;
+  max-height: 340px;
+  width: auto;
+  height: auto;
+  filter: drop-shadow(0 22px 26px rgba(0, 0, 0, 0.55));
+}
+
+@keyframes reveal-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-asset-wrap { animation: none; }
+}
+
+.reveal-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 26px;
+  margin: 8px 0 56px;
+  flex-wrap: wrap;
+}
+
+.reveal-btn {
+  background: var(--text);
+  color: #000;
+  border: none;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 12px 26px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.reveal-link {
+  color: var(--link);
+  font-size: 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--sans);
+}
+
+.reveal-link:hover { text-decoration: underline; }
+
+.reveal-foot {
+  padding: 20px 24px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--footnote);
+  border-top: 1px solid var(--line);
+}

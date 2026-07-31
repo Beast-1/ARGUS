@@ -1,0 +1,20 @@
+/* Reveal + Dashboard — Apple-product-page palette, real values from apple.com's own
+   dark product pages, not approximated.
+
+   Both themes expose the SAME semantic token names (--bg/--text/--muted/--line), each
+   mapped to its own values. Shared components can then style against those names and
+   work correctly under either theme, instead of hardcoding one theme's tokens plus a
+   hex fallback for the other. */
+.theme-reveal {
+  --bg: #000000;
+  --text: #f5f5f7;
+  --muted: #86868b;
+  --line: #2a2a2c;
+  --link: #2997ff;
+
+  --surface: #0a0a0a;  /* asset tiles sit slightly above pure black */
+  --footnote: #48484a;
+
+  background: var(--bg);
+  color: var(--text);
+}

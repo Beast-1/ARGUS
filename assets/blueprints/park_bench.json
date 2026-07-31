@@ -1,0 +1,19 @@
+{
+  "name": "park_bench",
+  "keywords": ["park", "bench", "seat", "seating", "outdoor", "garden", "slat", "wooden"],
+  "description": "park bench: mirrored iron leg frames, linear-array wood slats",
+  "notes": [
+    "Note how the 4 seat slats are ONE node with a linear array and both leg frames are ONE mirrored node."
+  ],
+  "materials_palette": {
+    "wood": {"color": [0.45, 0.30, 0.18], "metallic": 0.0, "roughness": 0.7},
+    "iron": {"color": [0.10, 0.10, 0.11], "metallic": 0.85, "roughness": 0.45}
+  },
+  "scene_graph": [
+    {"name": "leg_frame", "primitive": "box", "size": [0.06, 0.5, 0.45], "pos": [0.65, 0, 0.225], "material": "iron", "attach_to": "", "mirror": "X"},
+    {"name": "seat_slat", "primitive": "box", "size": [1.5, 0.10, 0.04], "pos": [0, -0.18, 0.47], "material": "wood", "attach_to": "leg_frame", "array": {"type": "linear", "count": 4, "step": [0, 0.12, 0]}},
+    {"name": "back_post", "primitive": "box", "size": [0.05, 0.05, 0.50], "pos": [0.65, -0.22, 0.70], "material": "iron", "attach_to": "leg_frame", "mirror": "X"},
+    {"name": "back_slat", "primitive": "box", "size": [1.5, 0.04, 0.10], "pos": [0, -0.22, 0.66], "material": "wood", "attach_to": "back_post", "array": {"type": "linear", "count": 2, "step": [0, 0, 0.16]}},
+    {"name": "front_stretcher", "primitive": "cylinder", "axis": "X", "radius": 0.02, "depth": 1.24, "pos": [0, 0.18, 0.18], "material": "iron", "attach_to": "leg_frame"}
+  ]
+}

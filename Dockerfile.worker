@@ -1,0 +1,41 @@
+# ARGUS server worker: headless Blender + the generation pipeline, driven by
+# an RQ job queue (service/worker.py). No GUI, no BlenderMCP (that mode
+# launches a windowed Blender process and only works on a desktop).
+FROM python:3.11-slim AS worker
+
+# Runtime libs Blender needs even in --background mode (EEVEE's GL stack,
+# plus the UI toolkit's shared libs that the binary still links against).
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        wget xz-utils \
+        libgl1 libxi6 libxrender1 libxfixes3 libxxf86vm1 libxkbcommon0 \
+        libsm6 libxext6 \
+    && rm -rf /var/lib/apt/lists/*
+
+ARG BLENDER_SERIES=4.2
+ARG BLENDER_VERSION=4.2.4
+RUN wget -q "https://download.blender.org/release/Blender${BLENDER_SERIES}/blender-${BLENDER_VERSION}-linux-x64.tar.xz" -O /tmp/blender.tar.xz \
+    && mkdir -p /opt/blender \
+    && tar -xf /tmp/blender.tar.xz -C /opt/blender --strip-components=1 \
+    && rm /tmp/blender.tar.xz
+
+ENV BLENDER_PATH=/opt/blender/blender
+ENV PATH="/opt/blender:${PATH}"
+ENV PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+COPY requirements-worker.txt .
+RUN pip install --no-cache-dir -r requirements-worker.txt
+
+COPY core/ core/
+COPY service/ service/
+COPY assets/ assets/
+COPY main.py .
+
+# Each job's out/runs and out/final live under here; ARGUS_KEEP_HISTORY=1
+# (set in service/worker.py per-job) keeps different users' same-named
+# assets from wiping each other on this shared container-lifetime path.
+ENV ARGUS_OUTPUT_ROOT=/app/out
+RUN mkdir -p /app/out
+
+CMD ["python", "-m", "service.worker"]

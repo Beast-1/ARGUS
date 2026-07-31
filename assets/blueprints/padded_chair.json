@@ -1,0 +1,20 @@
+{
+  "name": "padded_chair",
+  "keywords": ["chair", "cushion", "padded", "sofa", "armchair", "seat", "upholstered", "stool", "furniture"],
+  "description": "padded chair: wood frame with smooth/creased subdivision cushions",
+  "notes": [
+    "Note the cushions use smooth 2 with low crease for a genuinely puffy look (NOT plain boxes), sized slightly larger than the final form because subdivision shrinks ~15%."
+  ],
+  "materials_palette": {
+    "wood": {"color": [0.32, 0.20, 0.11], "metallic": 0.0, "roughness": 0.6},
+    "fabric": {"color": [0.55, 0.25, 0.22], "metallic": 0.0, "roughness": 0.9}
+  },
+  "scene_graph": [
+    {"name": "front_leg", "primitive": "cylinder", "axis": "Z", "radius": 0.025, "depth": 0.44, "pos": [0.20, 0.18, 0.22], "material": "wood", "attach_to": "", "mirror": "X"},
+    {"name": "back_leg", "primitive": "cylinder", "axis": "Z", "radius": 0.025, "depth": 0.44, "pos": [0.20, -0.18, 0.22], "material": "wood", "attach_to": "", "mirror": "X"},
+    {"name": "seat_frame", "primitive": "box", "size": [0.46, 0.44, 0.06], "pos": [0, 0, 0.47], "material": "wood", "attach_to": "front_leg"},
+    {"name": "seat_cushion", "primitive": "box", "size": [0.48, 0.46, 0.14], "smooth": 2, "crease": 0.1, "pos": [0, 0, 0.57], "material": "fabric", "attach_to": "seat_frame"},
+    {"name": "back_post", "primitive": "cylinder", "axis": "Z", "radius": 0.022, "depth": 0.55, "pos": [0.20, -0.20, 0.77], "material": "wood", "attach_to": "back_leg", "mirror": "X"},
+    {"name": "back_cushion", "primitive": "box", "size": [0.46, 0.12, 0.42], "smooth": 2, "crease": 0.15, "pos": [0, -0.20, 0.90], "material": "fabric", "attach_to": "back_post"}
+  ]
+}

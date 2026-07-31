@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# Secrets
+.env
+
+# Runtime output
+out/
+logs/
+
+# Node / Tauri
+app/node_modules/
+app/dist/
+app/src-tauri/target/
+
+# Build artifacts
+build/
+dist/

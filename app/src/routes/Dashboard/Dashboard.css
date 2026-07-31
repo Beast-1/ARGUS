@@ -1,0 +1,60 @@
+.dashboard {
+  min-height: 100%;
+}
+
+.dashboard-head {
+  padding: 44px 40px 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.dashboard-title {
+  font-family: var(--sans-light);
+  font-weight: 300;
+  font-size: 38px;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.dashboard-sort {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.dashboard-sort b {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.dashboard-status {
+  margin: 40px 40px 0;
+  font-size: 13px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dashboard-status-error {
+  color: var(--danger);
+}
+
+.dashboard-status button {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: var(--radius-s);
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.dashboard-grid {
+  padding: 36px 40px 50px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 36px 28px;
+}
