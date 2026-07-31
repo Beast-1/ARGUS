@@ -1814,7 +1814,17 @@ scene_graph (array of objects, one per part — this IS the build recipe, a dete
             hard-surface boxes (crates, tables, machinery); 0.005-0.02 typical.
             Smoothing pulls the surface inward ~15%, so give smooth parts a
             slightly LARGER size than the intended final form.
+            "taper": 0-2 (+ optional "taper_axis": "X"|"Y"|"Z", default "Z") —
+            scales the far face, turning a prism into a wedge or frustum.
+            0.85 = subtly narrower at the top, 0.0 = a point, 1.15 = flared.
+            Real objects are rarely perfect prisms: table/chair legs narrow
+            downward, chimneys and plinths narrow upward, hoppers and buckets
+            flare. Reach for a small taper (0.8-0.95) on any upright box part
+            unless it is genuinely a machined rectangular block.
     cylinder → "radius", "depth", "axis": "X"|"Y"|"Z" (+ optional "r_top" for taper), pos = centre
+               USE "r_top" LIBERALLY — a straight tube reads as a stock pipe.
+               Legs, posts, spouts, necks, nozzles, trunks and stacks all taper;
+               r_top of 0.6-0.9 x radius is the common case.
     wheel → "radius", "width", "axis": "X"|"Y" (UPRIGHT, horizontal axle), pos = hub centre
     bolt → "radius", "height", "axis" (hex detail), pos = centre
     ring → "radius" (centreline), "thickness" (cross-section radius), "axis" = hole direction, pos = centre
@@ -5870,11 +5880,15 @@ def generate_spec_repair(
         "  {\"material\": \"<name>\", \"set\": {\"color\": [r,g,b], \"roughness\": 0-1, \"metallic\": 0-1}}\n"
         "Settable part fields: pos, rot, size, radius, depth, height, width, length, "
         "r_top, axis, segments, profile, path, thickness, bevel, smooth, crease, "
-        "material, attach_to, mirror, array.\n"
+        "taper, taper_axis, material, attach_to, mirror, array.\n"
         "  smooth (box only, 1-3) + crease (0-1): subdivision smoothing — if a part "
         "should look soft/cushioned/rounded set smooth 2 with crease 0-0.2; crease "
         "near 1 keeps edges sharp. bevel (box only, metres): small chamfer for "
         "crisp hard-surface edges.\n"
+        "  If the feedback says the shape is blocky, boxy, flat or slab-like, the "
+        "fix is usually taper (box, 0.8-0.95) or r_top (cylinder, 0.6-0.9 x radius) "
+        "rather than moving parts around — a perfect prism almost never matches a "
+        "real object's silhouette.\n"
         "Note: 'params' is internal — set the dimension fields directly (e.g. "
         "{\"set\": {\"size\": [1,2,3]}}, never {\"set\": {\"params\": ...}}).\n"
         "Keep the edit list SMALL and targeted (1-8 edits). Distances in metres, Z up. "

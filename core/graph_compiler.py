@@ -497,6 +497,8 @@ def _emit_part(part: dict, mat_idents: dict) -> list[str]:
 
     if prim == "box":
         extra = f", bevel={_fmt(p['bevel'])}" if "bevel" in p else ""
+        if "taper" in p:
+            extra += f", taper={_fmt(p['taper'])}, taper_axis={p.get('taper_axis', 'Z')!r}"
         call = (f"argus_box({name!r}, {_fmt(loc)}, {_fmt(tuple(p['size']))}, "
                 f"{mat}, ROOT{extra})")
         if p.get("smooth"):

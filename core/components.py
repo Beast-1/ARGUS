@@ -115,13 +115,29 @@ def _argus_fan_cap(bm, ring_verts):
         bm.faces.new((cv, ring_verts[i], ring_verts[(i + 1) % n]))
 
 
-def argus_box(name, loc, size, mat, root, bevel=0.012):
-    """Rounded box. size=(sx,sy,sz) full dimensions; loc=center."""
+def argus_box(name, loc, size, mat, root, bevel=0.012, taper=None, taper_axis="Z"):
+    """Rounded box. size=(sx,sy,sz) full dimensions; loc=center.
+
+    taper: scale applied to the far face along taper_axis, so a part can read as a
+    wedge or frustum rather than a perfect rectangular prism. 1.0 = no taper, 0.8 =
+    the top is 80% of the base, 0.0 = a point. Cylinders have had this via r_top all
+    along; boxes did not, which is why every box-shaped part came out perfectly
+    prismatic — the single largest contributor to blocky silhouettes."""
     mesh = bpy.data.meshes.new(name)
     bm = bmesh.new()
     bmesh.ops.create_cube(bm, size=1.0)
     bmesh.ops.scale(bm, vec=mathutils.Vector((size[0], size[1], size[2])),
                     verts=bm.verts[:], space=mathutils.Matrix.Identity(4))
+    if taper is not None and abs(float(taper) - 1.0) > 1e-4:
+        t = max(0.0, float(taper))
+        ax = (taper_axis or "Z").upper()
+        # Scale the two cross-axis components of the far-side verts only.
+        cross = {"X": (1, 2), "Y": (0, 2), "Z": (0, 1)}.get(ax, (0, 1))
+        along = {"X": 0, "Y": 1, "Z": 2}.get(ax, 2)
+        for v in bm.verts:
+            if v.co[along] > 0.0:
+                v.co[cross[0]] *= t
+                v.co[cross[1]] *= t
     _argus_uv_box(bm)
     bmesh.ops.translate(bm, vec=mathutils.Vector(loc), verts=bm.verts[:])
     _argus_finalize(mesh, bm, bevel_off=bevel)

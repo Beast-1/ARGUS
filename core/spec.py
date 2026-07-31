@@ -96,6 +96,13 @@ def _clean_box(node):
         bevel = 0.0  # raw cage — the subdivision does the rounding
     if bevel is not None:
         params["bevel"] = min(bevel, min(sx, sy, sz) / 2.0)
+    # Frustum/wedge boxes. Clamped to 0..2: below 1 narrows toward the far face,
+    # above 1 flares out. Anything further reads as a modelling error, not intent.
+    taper = _num(node.get("taper"), default=None, lo=0.0, hi=2.0)
+    if taper is not None and abs(taper - 1.0) > 1e-4:
+        params["taper"] = taper
+        axis = str(node.get("taper_axis", "Z")).strip().upper()
+        params["taper_axis"] = axis if axis in ("X", "Y", "Z") else "Z"
     return params, None
 
 
@@ -680,7 +687,7 @@ _EDITABLE_FIELDS = {
     "pos", "rot", "size", "radius", "depth", "height", "width", "length",
     "r_top", "axis", "segments", "profile", "path", "thickness", "inset",
     "material", "attach_to", "mirror", "array", "yaw", "pitch", "curve",
-    "bevel", "smooth", "crease",
+    "bevel", "smooth", "crease", "taper", "taper_axis",
 }
 
 
