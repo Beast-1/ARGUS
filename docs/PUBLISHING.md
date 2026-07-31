@@ -24,8 +24,22 @@ This checklist tracks the gap between a local prototype and a publishable releas
 ## Known Hardening Work
 
 - Split `core/llm.py` into provider, planner, codegen, repair, and visual QA modules.
-- Split `desktop_app.py` into UI, pipeline worker, log parser, and renderer modules.
-- Replace UI stdout parsing with structured pipeline events.
+  Still ~6k lines, and it holds the handcrafted fallback scripts (see below).
+- Consolidate the handcrafted fallback scripts onto `core/components.py`. They each
+  redefine their own `make_mat`/`box`/`cyl` helpers, and because they hardcode flat
+  colours they used to ship untextured assets — worked around with a texture-upgrade
+  epilogue rather than fixed at the source.
 - Add Blender integration tests that run only when `BLENDER_PATH` is available.
 - Sandbox generated Blender Python before accepting untrusted users or prompts.
+- Teach the visual scorer to judge material realism. It grades silhouette only;
+  selection compensates with a deterministic texture/topology adjustment
+  (`_accept_candidate` in `main.py`), but the rubric itself is still material-blind.
+- Package the API as a PyInstaller sidecar so the app launches as one process
+  instead of `run_app.bat` starting uvicorn and the Tauri shell separately.
+
+### Done
+
+- ~~Split `desktop_app.py`~~ — replaced by the Tauri + React app in `app/`.
+- ~~Replace UI stdout parsing with structured pipeline events~~ — `service/pipeline_events.py`
+  now emits typed SSE events; the two duplicated stdout scrapers are gone.
 
