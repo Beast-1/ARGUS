@@ -82,13 +82,26 @@ def _geometry(gltf: dict) -> tuple[int, int, int]:
     return tris, verts, len(gltf.get("meshes", []))
 
 
+def _find_glb(asset_dir: Path) -> Optional[Path]:
+    """The GLB filename does not always match the folder name: make_run_id()
+    disambiguates a collided FOLDER as e.g. "traffic_cone(2)", but the exported
+    FILE inside it keeps the plain sanitized asset name, "traffic_cone.glb". A
+    real sweep cell hit exactly this — assuming they match silently reported
+    "no GLB exported" for an asset that had, in fact, exported cleanly."""
+    exact = asset_dir / f"{asset_dir.name}.glb"
+    if exact.exists():
+        return exact
+    candidates = sorted(asset_dir.glob("*.glb"))
+    return candidates[0] if candidates else None
+
+
 def collect(asset_dir: Path, run_dir: Optional[Path] = None) -> AssetMetrics:
     """asset_dir is out/final/<name>; run_dir is out/runs/<name> when available."""
     name = asset_dir.name
     m = AssetMetrics(asset=name)
 
-    glb = asset_dir / f"{name}.glb"
-    if not glb.exists():
+    glb = _find_glb(asset_dir)
+    if glb is None:
         m.notes.append("no GLB exported")
         return m
     m.exists = True

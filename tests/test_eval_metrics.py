@@ -47,6 +47,20 @@ def make_asset(tmp_path, name="thing", manifest=None, **glb):
     return d
 
 
+def test_disambiguated_folder_name_still_finds_the_glb(tmp_path):
+    """Real incident: make_run_id() names the FOLDER 'traffic_cone(2)' on a
+    collision, but the exported FILE inside stays 'traffic_cone.glb' — the
+    folder and file names diverge. Assuming they matched silently reported
+    a cleanly-exported asset as 'no GLB exported'."""
+    d = tmp_path / "final" / "traffic_cone(2)"
+    d.mkdir(parents=True)
+    write_glb(d / "traffic_cone.glb", plain=1, tris=8)
+    m = collect(d)
+    assert m.exists is True
+    assert m.triangles == 8
+    assert "no GLB exported" not in m.notes
+
+
 def test_missing_glb_is_reported_not_crashed(tmp_path):
     d = tmp_path / "final" / "empty"
     d.mkdir(parents=True)
