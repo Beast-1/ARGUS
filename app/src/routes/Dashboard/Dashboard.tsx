@@ -71,7 +71,7 @@ export function Dashboard({ onNavigate, onOpenProject }: DashboardProps) {
 
       <div className="dashboard-grid">
         {projects.map((p) => (
-          <AssetCard key={p.name} project={p} onOpen={onOpenProject} />
+          <AssetCard key={p.name} project={p} onOpen={onOpenProject} onDeleted={refresh} />
         ))}
       </div>
     </div>

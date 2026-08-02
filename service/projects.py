@@ -10,6 +10,8 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
+import subprocess
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -18,6 +20,7 @@ from service.schemas import ProjectDetail, ProjectFile, ProjectSummary
 
 OUTPUT_ROOT = Path(os.getenv("ARGUS_OUTPUT_ROOT", "out")).resolve()
 FINAL_ROOT = OUTPUT_ROOT / "final"
+RUNS_ROOT = OUTPUT_ROOT / "runs"
 
 _SEVERITY_COLORS = {
     "clean": "#34D399",
@@ -207,3 +210,82 @@ def resolve_project_file(name: str, filename: str) -> Optional[Path]:
     if not candidate.is_relative_to(run_dir) or not candidate.is_file():
         return None
     return candidate
+
+
+def _project_dir(name: str) -> Optional[Path]:
+    d = (FINAL_ROOT / name).resolve()
+    if not d.is_relative_to(FINAL_ROOT) or not d.is_dir():
+        return None
+    return d
+
+
+def open_in_blender(name: str) -> tuple[bool, str]:
+    """Launch the asset in a full Blender GUI session — ported from
+    desktop_app.py's `_open_in_blender`. Prefers the .blend (quads, materials,
+    lights intact); falls back to importing the GLB into a cleaned scene."""
+    from core.blender import BLENDER_PATH
+
+    project_dir = _project_dir(name)
+    if project_dir is None:
+        return False, "Project not found"
+
+    blender = str(BLENDER_PATH)
+    if not Path(blender).exists():
+        return False, f"BLENDER_PATH does not exist: {blender}"
+
+    blend = next(project_dir.glob("*.blend"), None)
+    glb = next(project_dir.glob("*.glb"), None)
+
+    try:
+        if blend is not None:
+            subprocess.Popen([blender, str(blend.resolve())])
+            return True, f"Opening {blend.name}"
+        if glb is not None:
+            expr = (
+                "import bpy; "
+                "bpy.ops.object.select_all(action='SELECT'); "
+                "bpy.ops.object.delete(use_global=False); "
+                f"bpy.ops.import_scene.gltf(filepath=r'{glb.resolve()}')"
+            )
+            subprocess.Popen([blender, "--python-expr", expr])
+            return True, f"Importing {glb.name}"
+        return False, "This project has no .blend or .glb file"
+    except OSError as exc:
+        return False, f"Blender launch failed: {exc}"
+
+
+def open_folder(name: str) -> tuple[bool, str]:
+    """Reveal the asset folder in Windows Explorer."""
+    project_dir = _project_dir(name)
+    if project_dir is None:
+        return False, "Project not found"
+    try:
+        subprocess.Popen(["explorer", str(project_dir)])
+        return True, "Opened"
+    except OSError as exc:
+        return False, f"Could not open folder: {exc}"
+
+
+def delete_project(name: str) -> tuple[bool, str]:
+    """Delete both out/final/<name> and out/runs/<name> — ported from
+    desktop_app.py's `_delete_project`, same path-safety checks: every target
+    must resolve inside FINAL_ROOT or RUNS_ROOT before anything is removed."""
+    targets = [FINAL_ROOT / name, RUNS_ROOT / name]
+    allowed_roots = [FINAL_ROOT.resolve(), RUNS_ROOT.resolve()]
+
+    deleted_any = False
+    for target in targets:
+        resolved = target.resolve()
+        if not any(resolved == base or base in resolved.parents for base in allowed_roots):
+            return False, f"Unsafe delete path: {resolved}"
+        if not resolved.exists():
+            continue
+        try:
+            shutil.rmtree(resolved)
+            deleted_any = True
+        except OSError as exc:
+            return False, f"Delete failed: {exc}"
+
+    if not deleted_any:
+        return False, "Project not found"
+    return True, "Deleted"

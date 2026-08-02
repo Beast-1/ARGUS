@@ -1,5 +1,8 @@
+import { useState } from "react";
 import { apiUrl } from "../../api/client";
 import { useProject } from "../../api/useProjects";
+import { useProjectActions } from "../../api/useProjectActions";
+import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { StatStrip, type Stat } from "../../components/StatStrip";
 import { TopNav } from "../../components/TopNav";
 import type { Route } from "../../routes";
@@ -25,6 +28,10 @@ function headlineParts(displayName: string): [string, string] {
 
 export function Reveal({ name, onNavigate }: RevealProps) {
   const { project, loading, error } = useProject(name);
+  const { openInBlender, openFolder, deleteProject, busyName, error: actionError } =
+    useProjectActions(() => onNavigate("dashboard"));
+  const [confirming, setConfirming] = useState(false);
+  const busy = busyName === name;
 
   if (loading) {
     return (
@@ -104,8 +111,6 @@ export function Reveal({ name, onNavigate }: RevealProps) {
         </div>
       </div>
 
-      {/* Two-tier CTA, both real download actions. The secondary slot used to be a
-          "Back to Library" link, which just duplicated TopNav's Dashboard link. */}
       <div className="reveal-cta">
         {glbFile && (
           <a className="reveal-btn" href={apiUrl(glbFile.url)} download>
@@ -122,10 +127,43 @@ export function Reveal({ name, onNavigate }: RevealProps) {
       <StatStrip stats={stats} />
 
       <div className="reveal-foot">
-        {project.name}
-        {glbFile ? ` · ${formatBytes(glbFile.bytes)}` : ""}
-        {project.has_manifest ? "" : " · no manifest (legacy asset)"}
+        <span>
+          {project.name}
+          {glbFile ? ` · ${formatBytes(glbFile.bytes)}` : ""}
+          {project.has_manifest ? "" : " · no manifest (legacy asset)"}
+          {actionError ? ` · ${actionError}` : ""}
+        </span>
+        <span className="reveal-foot-actions">
+          <button disabled={busy} onClick={() => openInBlender(name)}>
+            Open in Blender
+          </button>
+          <button disabled={busy} onClick={() => openFolder(name)}>
+            Show in Folder
+          </button>
+          <button
+            className="reveal-foot-danger"
+            disabled={busy}
+            onClick={() => setConfirming(true)}
+          >
+            Delete
+          </button>
+        </span>
       </div>
+
+      {confirming && (
+        <ConfirmDialog
+          title="Delete asset?"
+          body={`This removes "${project.display_name}" — the exported files and matching run files. This can't be undone.`}
+          confirmLabel="Delete"
+          danger
+          pending={busy}
+          onConfirm={() => {
+            deleteProject(name);
+            setConfirming(false);
+          }}
+          onCancel={() => setConfirming(false)}
+        />
+      )}
     </div>
   );
 }

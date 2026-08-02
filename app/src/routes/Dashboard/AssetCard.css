@@ -1,17 +1,61 @@
 .asset-card {
+  position: relative;
   cursor: pointer;
-  display: block;
   width: 100%;
-  background: none;
-  border: none;
-  padding: 0;
   text-align: left;
   font-family: inherit;
   color: inherit;
+}
+
+.asset-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 
 .asset-card-name {
   margin-top: 12px;
   font-size: 13.5px;
   font-weight: 500;
+}
+
+/* Hover-revealed row of real actions (Blender / Folder / Delete) — ported from
+   desktop_app.py's per-card action row, which the Tauri rebuild had dropped. */
+.asset-card-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.asset-card:hover .asset-card-actions,
+.asset-card:focus-within .asset-card-actions {
+  opacity: 1;
+}
+
+.asset-card-actions button {
+  background: rgba(0, 0, 0, 0.55);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.asset-card-actions button:hover {
+  background: rgba(0, 0, 0, 0.75);
+}
+
+.asset-card-actions button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.asset-card-actions .asset-card-danger:hover {
+  color: var(--danger);
+  border-color: var(--danger);
 }

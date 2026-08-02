@@ -65,6 +65,30 @@ def get_project_file(name: str, filename: str) -> FileResponse:
     return FileResponse(path)
 
 
+@app.post("/api/projects/{name}/open-in-blender")
+def open_project_in_blender(name: str) -> dict:
+    ok, message = projects.open_in_blender(name)
+    if not ok:
+        raise HTTPException(status_code=404 if "not found" in message else 500, detail=message)
+    return {"ok": True, "message": message}
+
+
+@app.post("/api/projects/{name}/open-folder")
+def open_project_folder(name: str) -> dict:
+    ok, message = projects.open_folder(name)
+    if not ok:
+        raise HTTPException(status_code=404 if "not found" in message else 500, detail=message)
+    return {"ok": True, "message": message}
+
+
+@app.delete("/api/projects/{name}")
+def delete_project(name: str) -> dict:
+    ok, message = projects.delete_project(name)
+    if not ok:
+        raise HTTPException(status_code=404 if "not found" in message else 500, detail=message)
+    return {"ok": True, "message": message}
+
+
 @app.post("/api/generate", status_code=202)
 def start_generation(req: GenerateRequest) -> dict:
     started = run_manager.start(

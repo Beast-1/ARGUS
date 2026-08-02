@@ -1,0 +1,72 @@
+.confirm-scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+}
+
+.confirm-box {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  padding: 22px 24px;
+  width: min(400px, 90vw);
+  border-radius: var(--radius-m);
+}
+
+.confirm-box h3 {
+  margin: 0 0 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.confirm-box p {
+  margin: 0 0 20px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.confirm-btn-ghost,
+.confirm-btn-primary,
+.confirm-btn-danger {
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: var(--radius-s);
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.confirm-btn-ghost {
+  background: transparent;
+  color: var(--muted);
+  border-color: var(--line);
+}
+
+.confirm-btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.confirm-btn-danger {
+  background: var(--danger);
+  color: #fff;
+}
+
+.confirm-btn-ghost:disabled,
+.confirm-btn-primary:disabled,
+.confirm-btn-danger:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

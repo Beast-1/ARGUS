@@ -34,7 +34,20 @@ COLUMNS = [
 ]
 
 
-def load(path: Path) -> list[dict]:
+def load(path: Path, dedupe: bool = True) -> list[dict]:
+    """Read runs.jsonl.
+
+    `runs.jsonl` is append-only, so a resumed sweep leaves the original
+    env-failure attempt for a cell alongside its later successful retry —
+    two rows for one (condition, prompt_id). Env-failure rows have
+    exists=False, so score/quality aggregates are already unaffected, but
+    n_attempted / build_rate would still double-count the dead attempt.
+    Dedupe keeps the LAST row per cell (the most recent attempt is the
+    authoritative one) while leaving the file itself untouched, so the full
+    attempt history — including env failures — stays on disk for audit.
+    Pass dedupe=False to see the raw log, e.g. to count how many env
+    failures occurred during collection.
+    """
     if not path.exists():
         print(f"no results at {path} — run `python -m eval.runner` first", file=sys.stderr)
         raise SystemExit(1)
@@ -46,7 +59,12 @@ def load(path: Path) -> list[dict]:
                 out.append(json.loads(line))
             except ValueError:
                 continue
-    return out
+    if not dedupe:
+        return out
+    latest: dict[tuple, dict] = {}
+    for rec in out:
+        latest[(rec.get("condition"), rec.get("prompt_id"))] = rec
+    return list(latest.values())
 
 
 def fmt(value) -> str:
