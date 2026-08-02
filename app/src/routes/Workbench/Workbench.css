@@ -364,6 +364,19 @@ textarea.wb-field { resize: none; height: 56px; line-height: 1.45; }
   padding: 0;
 }
 
+.wb-link:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.wb-link-danger {
+  color: var(--muted);
+}
+
+.wb-link-danger:hover:not(:disabled) {
+  color: var(--danger);
+}
+
 /* ---- approval modal ---- */
 .wb-modal-scrim {
   position: fixed;

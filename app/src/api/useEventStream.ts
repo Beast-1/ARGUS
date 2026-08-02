@@ -29,7 +29,8 @@ export type RunStatus =
   | "complete"
   | "failed"
   | "rejected"
-  | "error";
+  | "error"
+  | "cancelled";
 
 export interface CompletePayload {
   run_id: string | null;
@@ -122,6 +123,20 @@ function reducer(state: RunState, action: Action): RunState {
       return { ...state, status: "running", approval: null };
     case "complete":
       return { ...state, status: "complete", completed: p as CompletePayload, approval: null };
+    case "cancel_requested":
+      return { ...state, message: "Cancelling…" };
+    case "cancelled":
+      // A cancelled run may still carry a real asset (main.py's loops stop
+      // cooperatively, then the pipeline finishes export/validation as usual)
+      // — reuse the complete payload shape when run_id is present so Workbench
+      // can still offer "View result" for it, same as a normal completion.
+      return {
+        ...state,
+        status: "cancelled",
+        completed: p.run_id ? (p as CompletePayload) : null,
+        approval: null,
+        message: p.reason ?? null,
+      };
     case "rejected":
       return { ...state, status: "rejected", message: p.reason ?? "Request rejected" };
     case "failed":
@@ -144,6 +159,8 @@ const EVENT_TYPES = [
   "memory_approval_pending",
   "memory_approval_resolved",
   "complete",
+  "cancel_requested",
+  "cancelled",
   "rejected",
   "failed",
   "error",

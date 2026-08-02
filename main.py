@@ -107,8 +107,40 @@ def _pipeline_deadline() -> float | None:
     return (time.monotonic() + MAX_SECONDS) if MAX_SECONDS > 0 else None
 
 
+# User-initiated cancellation, layered onto the same checkpoints ARGUS_MAX_SECONDS
+# already gates rather than threading a new parameter through every loop
+# (run_visual_improvement_loop, the outer regen loop, run_best_of_n_generation).
+# One process-wide flag is correct here: exactly one generation runs at a time
+# (RunManager's single-flight lock in service/run_manager.py), so there is only
+# ever one pipeline that "cancel" could mean. Cooperative, not instant — it takes
+# effect at the same iteration boundaries a deadline would, not mid-LLM-call or
+# mid-Blender-build; a run cancelled during initial planning (before the first
+# checkpoint) will still take as long as planning takes.
+_CANCEL_EVENT = _threading.Event()
+
+
+def request_cancel() -> None:
+    _CANCEL_EVENT.set()
+
+
+def clear_cancel() -> None:
+    """Call before starting a new run — the flag is process-wide and would
+    otherwise make the next run appear cancelled before it starts."""
+    _CANCEL_EVENT.clear()
+
+
+def is_cancelled() -> bool:
+    return _CANCEL_EVENT.is_set()
+
+
 def _past_deadline(deadline: float | None) -> bool:
-    return deadline is not None and time.monotonic() >= deadline
+    return _CANCEL_EVENT.is_set() or (deadline is not None and time.monotonic() >= deadline)
+
+
+def _stop_reason() -> str:
+    """For the log lines at each _past_deadline() checkpoint — same trip wire,
+    different cause, worth telling apart in the console/event stream."""
+    return "cancelled by user" if _CANCEL_EVENT.is_set() else "deadline exceeded"
 
 
 LOG_DIR = Path("logs")
@@ -764,7 +796,7 @@ def run_best_of_n_generation(
     from core.prompt import build_object_prompt as _bop
     for _i in range(2, n_candidates + 1):
         if _past_deadline(deadline):
-            print(f"\n[BEST-OF-N {_i}/{n_candidates}] deadline exceeded — stopping early")
+            print(f"\n[BEST-OF-N {_i}/{n_candidates}] {_stop_reason()} — stopping early")
             break
         # No point spending another full LLM-codegen + Blender build on a candidate
         # that already has clean topology and real materials at a confident score —
@@ -877,7 +909,7 @@ def run_visual_improvement_loop(
             print(f"Visual target     : met ({best_score} >= {VISUAL_TARGET_SCORE})")
             break
         if _past_deadline(deadline):
-            print(f"\n[VISUAL IMPROVE {_it}/{VISUAL_MAX_ITERS}] deadline exceeded — stopping early")
+            print(f"\n[VISUAL IMPROVE {_it}/{VISUAL_MAX_ITERS}] {_stop_reason()} — stopping early")
             break
 
         print(f"\n[VISUAL IMPROVE {_it}/{VISUAL_MAX_ITERS}] score {best_score} < target {VISUAL_TARGET_SCORE}")
@@ -1337,7 +1369,7 @@ def run_pipeline(
             if _outer_best_score >= VISUAL_TARGET_SCORE:
                 break
             if _past_deadline(_run_deadline):
-                print(f"\n[FULL REGEN {_outer_it}/{OUTER_REGEN_ATTEMPTS}] deadline exceeded — stopping early")
+                print(f"\n[FULL REGEN {_outer_it}/{OUTER_REGEN_ATTEMPTS}] {_stop_reason()} — stopping early")
                 break
 
             _last_render = None

@@ -23,6 +23,7 @@ const STATUS_TEXT: Record<string, string> = {
   failed: "Failed",
   rejected: "Rejected",
   error: "Error",
+  cancelled: "Cancelled",
 };
 
 /** Absolute pipeline path -> API file url. main.py prints Windows paths, so normalise
@@ -47,6 +48,7 @@ export function Workbench({ onNavigate, onOpenProject }: WorkbenchProps) {
   const { projects, refresh } = useProjects();
   const [error, setError] = useState<string | null>(null);
   const [approvalPending, setApprovalPending] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   const [now, setNow] = useState(Date.now());
   const logRef = useRef<HTMLDivElement | null>(null);
 
@@ -58,9 +60,12 @@ export function Workbench({ onNavigate, onOpenProject }: WorkbenchProps) {
     return () => clearInterval(id);
   }, [busy]);
 
-  // A finished run means out/final has a new/updated folder — resync the recent list.
+  // A finished run means out/final may have a new/updated folder — resync the
+  // recent list. A cancelled run can still have produced an asset (main.py's
+  // loops stop cooperatively, then the pipeline finishes as usual), so it
+  // counts too, not just a clean "complete".
   useEffect(() => {
-    if (run.status === "complete") refresh();
+    if (run.status === "complete" || run.status === "cancelled") refresh();
   }, [run.status, refresh]);
 
   useEffect(() => {
@@ -96,6 +101,17 @@ export function Workbench({ onNavigate, onOpenProject }: WorkbenchProps) {
           ? "A generation is already running."
           : `Couldn't start: ${(err as Error).message}`,
       );
+    }
+  }
+
+  async function cancel() {
+    setCancelling(true);
+    try {
+      await apiPost("/api/generate/cancel");
+    } catch (err) {
+      setError(`Couldn't cancel: ${(err as Error).message}`);
+    } finally {
+      setCancelling(false);
     }
   }
 
@@ -154,7 +170,9 @@ export function Workbench({ onNavigate, onOpenProject }: WorkbenchProps) {
                     ? "var(--accent)"
                     : run.status === "idle"
                       ? "var(--dim)"
-                      : "var(--danger)",
+                      : run.status === "cancelled"
+                        ? "var(--warning)"
+                        : "var(--danger)",
             }}
           />
           <span>
@@ -165,6 +183,11 @@ export function Workbench({ onNavigate, onOpenProject }: WorkbenchProps) {
             {run.message ? ` — ${run.message}` : ""}
           </span>
           <span className="wb-sp" />
+          {busy && (
+            <button className="wb-link wb-link-danger" disabled={cancelling} onClick={cancel}>
+              {cancelling ? "Cancelling…" : "Cancel"}
+            </button>
+          )}
           {run.completed && (
             <button
               className="wb-link"

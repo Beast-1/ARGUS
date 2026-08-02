@@ -46,6 +46,7 @@ COMPLETE = "complete"
 FAILED = "failed"
 REJECTED = "rejected"
 ERROR = "error"
+CANCELLED = "cancelled"
 
 
 class RunManager:
@@ -104,6 +105,12 @@ class RunManager:
         if not self._lock.acquire(blocking=False):
             return False
 
+        # The cancel flag is process-wide (main._CANCEL_EVENT) and outlives a run
+        # that finished normally — clear it before this one starts, or a prior
+        # cancelled run would make this new run appear cancelled from the outset.
+        from main import clear_cancel
+        clear_cancel()
+
         with self._history_guard:
             self._history = []
         self.status = RUNNING
@@ -153,9 +160,30 @@ class RunManager:
             self.run_id = writer.run_id
             self.asset_name = writer.asset_name
 
+            # A cancelled run still goes through run_pipeline's normal completion
+            # path (main.py's loops stop cooperatively at the next checkpoint,
+            # then the pipeline finishes the remaining stages as usual) — so
+            # `success` alone can't tell "finished" from "stopped early because
+            # you asked it to". Check the cancel flag to report the state you
+            # actually asked for, while still surfacing whatever asset exists.
+            from main import is_cancelled
+            cancelled = is_cancelled()
+
             # Terminal state comes from the real return value, cross-checked against the
             # completion markers — the same belt-and-braces service/worker.py:115 uses.
-            if success is None:
+            if cancelled and success and writer.final_asset:
+                self.status = CANCELLED
+                self.emit("cancelled", {
+                    "run_id": writer.run_id,
+                    "asset_name": writer.asset_name,
+                    "glb_path": writer.final_asset,
+                    "preview_path": writer.preview_path,
+                    "visual_score": _manifest_score(writer.final_asset),
+                })
+            elif cancelled:
+                self.status = CANCELLED
+                self.emit("cancelled", {"reason": "Cancelled before an asset was produced"})
+            elif success is None:
                 self.status = REJECTED
                 self.emit("rejected", {"reason": writer.rejection_reason or "Request rejected"})
             elif success and writer.final_asset:
@@ -200,6 +228,21 @@ class RunManager:
         event.wait()
         self.status = RUNNING
         return self._approval_decision
+
+    def request_cancel(self) -> bool:
+        """Returns False if there's nothing running to cancel."""
+        if not self.is_busy():
+            return False
+        from main import request_cancel as _request_cancel
+        _request_cancel()
+        self.emit("cancel_requested", {})
+        # If the pipeline thread is currently blocked waiting on a memory-approval
+        # decision, it can't reach the next _past_deadline() checkpoint until that
+        # wait ends — resolve it (as "don't save") so cancellation actually
+        # unblocks the thread instead of hanging until someone answers the dialog.
+        if self.status == AWAITING_APPROVAL:
+            self.resolve_memory_approval(False)
+        return True
 
     def resolve_memory_approval(self, approved: bool) -> bool:
         """Returns False if nothing is currently awaiting a decision."""

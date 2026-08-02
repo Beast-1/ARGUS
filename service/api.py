@@ -114,6 +114,13 @@ def resolve_memory_approval(req: MemoryApprovalRequest) -> dict:
     return {"ok": True}
 
 
+@app.post("/api/generate/cancel")
+def cancel_generation() -> dict:
+    if not run_manager.request_cancel():
+        raise HTTPException(status_code=409, detail="Nothing is running.")
+    return {"ok": True}
+
+
 def _sse(event_type: str, payload: dict) -> str:
     return f"event: {event_type}\ndata: {json.dumps(payload)}\n\n"
 
