@@ -1,0 +1,230 @@
+
+[KEY POOL STATUS]
+{'google': [{'name': 'GOOGLE_API_KEY', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_2', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_3', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_4', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_5', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_6', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}], 'openrouter': [{'name': 'OPENROUTER_API_KEY', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'OPENROUTER_API_KEY_2', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}]}
+
+[STAGE 1] Planning and Structural Analysis
+----------------------------------------------------
+2026-09-10 08:10:03,667 | ERROR | [KEY_POOL] GOOGLE_API_KEY exhausted
+2026-09-10 08:10:04,793 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+2026-09-10 08:10:05,919 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:10:09,566 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:10:09,904 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:10:10,080 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:10:10,713 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+2026-09-10 08:10:10,887 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+2026-09-10 08:10:11,193 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+Category          : Fire Hydrant
+Geometry          : hard_surface
+Blueprint         : fire_hydrant (318 loaded)
+Style             : street fire hydrant
+Material          : painted metal
+Scale             : 1.0 m
+Poly budget       : medium
+Export            : glb
+Parts:
+  - body
+  - detail
+  - main housing
+  - pipes/shafts
+  - flanges/brackets
+  - bolts
+  - base plate
+  - control/detail panels
+  - ... 4 more
+Structure         : Fire Hydrant blueprint 'fire_hydrant' matched from the structure library. Build it as a recognizable street fire hydrant with its required support and signature parts.
+Primary forms:
+  - main body volume
+  - secondary details
+  - heavy machine body
+  - cylindrical pipes/shafts
+  - flat mounting plates
+  - ... 1 more
+Assembly order:
+  - build grounded main body
+  - attach secondary details
+  - build base plate
+  - mount main housing
+  - attach pipes/shafts/flanges
+  - add bolts and panels
+Attachments:
+  - visible joints connecting all major pieces
+  - flanges overlap pipe ends
+  - bolts sit on plates
+  - housing bolts to base
+Orientation:
+  - Z is up
+  - circular mechanical parts follow their real-world axis
+  - base is grounded
+  - pipes follow real axes
+  - controls face outward
+Support           : Base plate and brackets carry the heavy industrial body.
+Texture plan:
+  - metal material
+  - subtle roughness and edge wear
+  - painted metal
+  - brushed/chrome shafts
+  - rubber gaskets
+  - edge grime/wear
+Shape plan:
+  - beveled hard-surface edges
+  - rounded or tapered forms where the object is not naturally box-shaped
+  - surface details that break up large plain faces
+  - bevel housings
+  - use cylinders for pipes
+  - add flanges, bolts, ribs, and panels
+  - ... 3 more
+Constraints:
+  - no floating parts
+  - no flat wheels unless explicitly horizontal
+  - pipes/shafts must connect to housing
+  - base must support body
+  - flanges and bolts must be visible
+  - must read clearly as fire hydrant, not a generic primitive or unrelated object
+  - ... 3 more
+[GRAPH_PARTS]["body", "detail", "main housing", "pipes/shafts", "flanges/brackets", "bolts", "base plate", "control/detail panels", "main barrel", "side nozzles", "top cap", "base flange"]
+
+[STAGE 2] Asset Naming
+----------------------------------------------------
+Asset name        : cast_iron_fire_hydrant
+Project folder    : cast_iron_fire_hydrant(4)
+
+[VISION] Generating reference image in background (Gemini > Pollinations FLUX)...
+
+[STAGE 3] Blender Script Generation
+----------------------------------------------------
+Generation        : LLM codegen (no usable build spec)
+[VISION] Reference image saved -> reference.jpg (91KB)
+2026-09-10 08:10:26,687 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:10:27,907 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:10:29,145 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:10:29,145 | WARNING | [SCRIPT_GEN] Vision-guided generation failed, falling back to text-only
+Script saved      : C:\Users\darpa\Desktop\ARGUS\eval\out\full\runs\cast_iron_fire_hydrant(4)\scripts\cast_iron_fire_hydrant.py
+
+[STAGE 4] Critic Review
+----------------------------------------------------
+Repair required   : yes
+Summary           : Generated script does not satisfy structure blueprint 'fire_hydrant'.
+Issues:
+  - Insufficient visible hard-surface detail: add bolts, seams, panels, brackets, vents, handles, feet, or similar attached parts.
+Critic pass 1     : issuing repair patch
+Critic pass 1     : patch applied â†’ re-reviewing
+Repair required   : yes
+Summary           : Generated script does not satisfy structure blueprint 'fire_hydrant'.
+Issues:
+  - Insufficient visible hard-surface detail: add bolts, seams, panels, brackets, vents, handles, feet, or similar attached parts.
+Critic pass 2     : issuing repair patch
+Critic pass 2     : patch applied â†’ re-reviewing
+
+[STAGE 5] Blender Execution and Export
+----------------------------------------------------
+Poly budget       : 7,576 -> 4,970 tris (budget 5,000, 1.52x)
+Blender status    : export complete
+GLB               : C:\Users\darpa\Desktop\ARGUS\eval\out\full\final\cast_iron_fire_hydrant(4)\cast_iron_fire_hydrant.glb
+FBX               : C:\Users\darpa\Desktop\ARGUS\eval\out\full\final\cast_iron_fire_hydrant(4)\cast_iron_fire_hydrant.fbx
+BLEND             : C:\Users\darpa\Desktop\ARGUS\eval\out\full\final\cast_iron_fire_hydrant(4)\cast_iron_fire_hydrant.blend
+[PREVIEW IMAGE]
+C:\Users\darpa\Desktop\ARGUS\eval\out\full\final\cast_iron_fire_hydrant(4)\cast_iron_fire_hydrant_preview.png
+Reference image   : C:\Users\darpa\Desktop\ARGUS\eval\out\full\final\cast_iron_fire_hydrant(4)\reference.jpg
+
+[STAGE 54] Best-of-3 Candidate Generation
+----------------------------------------------------
+2026-09-10 08:10:49,315 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:10:50,842 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:10:54,810 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:10:56,305 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:10:58,923 | WARNING | [VISUAL_QA] All vision models failed â€” skipping visual score
+Candidate 1/3: score -1/10
+
+[BEST-OF-N 2/3] generating fresh candidate
+2026-09-10 08:11:03,761 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:11:04,965 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:11:06,030 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:11:06,040 | WARNING | [SCRIPT_GEN] Vision-guided generation failed, falling back to text-only
+Poly budget       : 7,576 -> 4,970 tris (budget 5,000, 1.52x)
+2026-09-10 08:11:27,198 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:11:28,779 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:11:32,795 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:11:34,233 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:11:37,017 | WARNING | [VISUAL_QA] All vision models failed â€” skipping visual score
+Candidate 2/3: score -1/10
+
+[BEST-OF-N 3/3] generating fresh candidate
+2026-09-10 08:11:41,751 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+2026-09-10 08:11:42,905 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:11:44,196 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:11:44,196 | WARNING | [SCRIPT_GEN] Vision-guided generation failed, falling back to text-only
+Poly budget       : 7,576 -> 4,970 tris (budget 5,000, 1.52x)
+2026-09-10 08:12:04,795 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+2026-09-10 08:12:05,936 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:12:10,005 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:12:11,352 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:12:13,972 | WARNING | [VISUAL_QA] All vision models failed â€” skipping visual score
+Candidate 3/3: score -1/10
+
+Best-of-N final   : -1/10 (from 3 candidates)
+
+[STAGE 55] Visual Feedback Loop
+----------------------------------------------------
+2026-09-10 08:12:20,234 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:12:21,909 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:12:25,955 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+2026-09-10 08:12:27,281 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:12:29,827 | WARNING | [VISUAL_QA] All vision models failed â€” skipping visual score
+Visual loop       : skipped (no vision model / render unavailable)
+
+[STAGE 56] Full Regen Attempt 1/3 (score -1 < target 8)
+----------------------------------------------------
+Full regen        : no script produced; stopping outer loop
+
+[STAGE 6] Runtime Topology Validation
+----------------------------------------------------
+Topology source   : inline (measured during the build â€” no extra Blender pass)
+Success           : True
+Severity          : high
+Meshes            : 33
+Tri faces         : 4970
+Quad faces        : 0
+N-gons            : 0
+Open edges        : 0
+Manifold errors   : 0
+Components        : 2
+Floating parts    : 25
+Grounded          : True
+Topology status   : issues detected
+- assembly_has_2_separate_clusters
+- 25_floating_mesh_objects
+
+[STAGE 7] Export Quality Summary
+----------------------------------------------------
+Success           : True
+GLB               : 289520 bytes
+FBX               : 325836 bytes
+BLEND             : 237451 bytes
+
+[STAGE 75] Visual Quality Assessment
+----------------------------------------------------
+Visual QA         : skipped (no vision model / render available)
+
+[STAGE 77] Diffusion Texture Paint
+----------------------------------------------------
+2026-09-10 08:12:50,181 | WARNING | [CF_EDIT] error 403: {"errors":[{"message":"AiError: Ai: This account is not allowed to access @cf/runwayml/stable-diffusion-v1-5-img2img. (e97dc42d-3fe7-4b96-857b-cd6bc0d90292)","c
+2026-09-10 08:12:51,409 | WARNING | [NIM_EDIT] error 422: {"detail":"Expected: example_id, got: base64"}
+2026-09-10 08:12:52,904 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:12:54,347 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+2026-09-10 08:12:55,665 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:12:56,888 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:12:58,077 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:12:58,077 | WARNING | [GEMINI_EDIT] no image-edit model available
+2026-09-10 08:12:58,090 | WARNING | [PAINT] view 0 repaint unavailable â€” skipping paint
+Texture paint     : skipped
+
+[STAGE 8] Structure Memory Approval
+----------------------------------------------------
+Memory status     : skipped
+Reason            : local structural critique still requires repair
+Reference   : reference.jpg
+
+[ARGUS COMPLETE]
+Final Asset : C:\Users\darpa\Desktop\ARGUS\eval\out\full\final\cast_iron_fire_hydrant(4)\cast_iron_fire_hydrant.glb
+Preview     : C:\Users\darpa\Desktop\ARGUS\eval\out\full\final\cast_iron_fire_hydrant(4)\cast_iron_fire_hydrant_preview.png
+Project     : cast_iron_fire_hydrant(4)

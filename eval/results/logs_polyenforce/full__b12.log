@@ -1,0 +1,230 @@
+
+[KEY POOL STATUS]
+{'google': [{'name': 'GOOGLE_API_KEY', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_2', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_3', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_4', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_5', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_6', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}], 'openrouter': [{'name': 'OPENROUTER_API_KEY', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'OPENROUTER_API_KEY_2', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}]}
+
+[STAGE 1] Planning and Structural Analysis
+----------------------------------------------------
+2026-09-10 08:13:47,936 | ERROR | [KEY_POOL] GOOGLE_API_KEY exhausted
+2026-09-10 08:13:49,058 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+2026-09-10 08:13:50,078 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:13:52,012 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:13:52,092 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:13:52,278 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:13:52,291 | WARNING | [KEY_POOL] Waiting 0.8s for cooldown
+2026-09-10 08:13:53,079 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:13:53,208 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:13:54,062 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+Category          : Street Lamp
+Geometry          : organic
+Blueprint         : street_lamp (318 loaded)
+Style             : roadside street lamp
+Material          : painted metal and glass
+Scale             : 4.0 m
+Poly budget       : high
+Export            : glb
+Parts:
+  - body
+  - detail
+  - vertical pole/mast
+  - base plate or buried foot
+  - crossarms/brackets
+  - mounted fixtures
+  - bolts/collars
+  - tall pole
+  - ... 11 more
+Structure         : Street Lamp blueprint 'street_lamp' matched from the structure library. Build it as a recognizable roadside street lamp with its required support and signature parts.
+Primary forms:
+  - main body volume
+  - secondary details
+  - tall vertical cylinder or tapered mast
+  - horizontal arms
+  - small mounted equipment
+  - ... 1 more
+Assembly order:
+  - build grounded main body
+  - attach secondary details
+  - build base
+  - raise pole/mast
+  - attach arms/brackets
+  - attach fixtures and collars
+Attachments:
+  - visible joints connecting all major pieces
+  - pole penetrates base
+  - arms clamp to pole
+  - fixtures attach to arms/brackets
+Orientation:
+  - Z is up
+  - circular mechanical parts follow their real-world axis
+  - pole is vertical
+  - arms are horizontal
+  - base touches ground
+Support           : Base plate, foot, or ground embed keeps pole upright.
+Texture plan:
+  - metal material
+  - subtle roughness and edge wear
+  - painted metal/wood/concrete pole
+  - metal brackets
+  - weathering near base
+Shape plan:
+  - beveled hard-surface edges
+  - rounded or tapered forms where the object is not naturally box-shaped
+  - surface details that break up large plain faces
+  - taper or segment pole
+  - add collars, bolts, and mounted details
+  - use part-appropriate geometry instead of one generic cube helper for every visible part
+  - ... 7 more
+Constraints:
+  - no floating parts
+  - no flat wheels unless explicitly horizontal
+  - pole must be vertical and grounded
+  - fixtures must attach
+  - arms must not float
+  - must read clearly as street lamp, not a generic primitive or unrelated object
+  - ... 8 more
+[GRAPH_PARTS]["body", "detail", "vertical pole/mast", "base plate or buried foot", "crossarms/brackets", "mounted fixtures", "bolts/collars", "tall pole", "curved arm", "lamp head", "base plate", "root flare", "tapered organic trunk or pseudostem", "layered leaf crown", "individual broad leaf blades", "leaf center veins", "hanging fruit bunch if requested", "surface bark or fibrous stem strips", "aerial roots and prop roots for banyan trees"]
+
+[STAGE 2] Asset Naming
+----------------------------------------------------
+Asset name        : street_lamp_post
+Project folder    : street_lamp_post(4)
+
+[VISION] Generating reference image in background (Gemini > Pollinations FLUX)...
+
+[STAGE 3] Blender Script Generation
+----------------------------------------------------
+Generation        : LLM codegen (no usable build spec)
+[VISION] Reference image saved -> reference.jpg (29KB)
+2026-09-10 08:14:08,323 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:14:09,511 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:14:10,819 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:14:10,821 | WARNING | [SCRIPT_GEN] Vision-guided generation failed, falling back to text-only
+Script saved      : C:\Users\darpa\Desktop\ARGUS\eval\out\full\runs\street_lamp_post(4)\scripts\street_lamp_post.py
+
+[STAGE 4] Critic Review
+----------------------------------------------------
+Repair required   : yes
+Summary           : Generated script does not satisfy structure blueprint 'street_lamp'.
+Issues:
+  - Insufficient visible botanical detail: add roots, trunk/stem sections, leaf blades, veins, bark strips, fruit stalks, or attached fruit clusters.
+Critic pass 1     : issuing repair patch
+Critic pass 1     : patch applied â†’ re-reviewing
+Repair required   : yes
+Summary           : Generated script does not satisfy structure blueprint 'street_lamp'.
+Issues:
+  - Insufficient visible botanical detail: add roots, trunk/stem sections, leaf blades, veins, bark strips, fruit stalks, or attached fruit clusters.
+Critic pass 2     : issuing repair patch
+Critic pass 2     : patch applied â†’ re-reviewing
+
+[STAGE 5] Blender Execution and Export
+----------------------------------------------------
+Poly budget       : 6,148 tris (within budget, untouched)
+Blender status    : export complete
+GLB               : C:\Users\darpa\Desktop\ARGUS\eval\out\full\final\street_lamp_post(4)\street_lamp_post.glb
+FBX               : C:\Users\darpa\Desktop\ARGUS\eval\out\full\final\street_lamp_post(4)\street_lamp_post.fbx
+BLEND             : C:\Users\darpa\Desktop\ARGUS\eval\out\full\final\street_lamp_post(4)\street_lamp_post.blend
+[PREVIEW IMAGE]
+C:\Users\darpa\Desktop\ARGUS\eval\out\full\final\street_lamp_post(4)\street_lamp_post_preview.png
+Reference image   : C:\Users\darpa\Desktop\ARGUS\eval\out\full\final\street_lamp_post(4)\reference.jpg
+
+[STAGE 54] Best-of-3 Candidate Generation
+----------------------------------------------------
+2026-09-10 08:14:30,508 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:14:31,762 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:14:35,714 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:14:37,215 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:14:39,867 | WARNING | [VISUAL_QA] All vision models failed â€” skipping visual score
+Candidate 1/3: score -1/10
+
+[BEST-OF-N 2/3] generating fresh candidate
+2026-09-10 08:14:44,697 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:14:45,793 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:14:46,873 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:14:46,873 | WARNING | [SCRIPT_GEN] Vision-guided generation failed, falling back to text-only
+Poly budget       : 6,148 tris (within budget, untouched)
+2026-09-10 08:15:07,591 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:15:08,955 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:15:12,947 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:15:14,396 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:15:17,188 | WARNING | [VISUAL_QA] All vision models failed â€” skipping visual score
+Candidate 2/3: score -1/10
+
+[BEST-OF-N 3/3] generating fresh candidate
+2026-09-10 08:15:21,522 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:15:22,648 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:15:23,537 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:15:23,552 | WARNING | [SCRIPT_GEN] Vision-guided generation failed, falling back to text-only
+Poly budget       : 6,148 tris (within budget, untouched)
+2026-09-10 08:15:42,215 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:15:43,666 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:15:47,711 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:15:49,262 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:15:51,839 | WARNING | [VISUAL_QA] All vision models failed â€” skipping visual score
+Candidate 3/3: score -1/10
+
+Best-of-N final   : -1/10 (from 3 candidates)
+
+[STAGE 55] Visual Feedback Loop
+----------------------------------------------------
+2026-09-10 08:15:57,990 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:15:59,504 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:16:03,627 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:16:04,905 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:16:07,307 | WARNING | [VISUAL_QA] All vision models failed â€” skipping visual score
+Visual loop       : skipped (no vision model / render unavailable)
+
+[STAGE 56] Full Regen Attempt 1/3 (score -1 < target 8)
+----------------------------------------------------
+Full regen        : no script produced; stopping outer loop
+
+[STAGE 6] Runtime Topology Validation
+----------------------------------------------------
+Topology source   : inline (measured during the build â€” no extra Blender pass)
+Success           : True
+Severity          : high
+Meshes            : 31
+Tri faces         : 6148
+Quad faces        : 0
+N-gons            : 0
+Open edges        : 0
+Manifold errors   : 0
+Components        : 2
+Floating parts    : 22
+Grounded          : True
+Topology status   : issues detected
+- assembly_has_2_separate_clusters
+- 22_floating_mesh_objects
+
+[STAGE 7] Export Quality Summary
+----------------------------------------------------
+Success           : True
+GLB               : 413840 bytes
+FBX               : 353372 bytes
+BLEND             : 250359 bytes
+
+[STAGE 75] Visual Quality Assessment
+----------------------------------------------------
+Visual QA         : skipped (no vision model / render available)
+
+[STAGE 77] Diffusion Texture Paint
+----------------------------------------------------
+2026-09-10 08:16:27,935 | WARNING | [CF_EDIT] error 403: {"errors":[{"message":"AiError: Ai: This account is not allowed to access @cf/runwayml/stable-diffusion-v1-5-img2img. (9ff98268-6aac-4648-85c9-ad3ae02f5c7c)","c
+2026-09-10 08:16:30,983 | WARNING | [NIM_EDIT] error 422: {"detail":"Expected: example_id, got: base64"}
+2026-09-10 08:16:31,997 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:16:33,407 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+2026-09-10 08:16:34,796 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:16:36,136 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:16:37,507 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:16:37,507 | WARNING | [GEMINI_EDIT] no image-edit model available
+2026-09-10 08:16:37,507 | WARNING | [PAINT] view 0 repaint unavailable â€” skipping paint
+Texture paint     : skipped
+
+[STAGE 8] Structure Memory Approval
+----------------------------------------------------
+Memory status     : skipped
+Reason            : local structural critique still requires repair
+Reference   : reference.jpg
+
+[ARGUS COMPLETE]
+Final Asset : C:\Users\darpa\Desktop\ARGUS\eval\out\full\final\street_lamp_post(4)\street_lamp_post.glb
+Preview     : C:\Users\darpa\Desktop\ARGUS\eval\out\full\final\street_lamp_post(4)\street_lamp_post_preview.png
+Project     : street_lamp_post(4)

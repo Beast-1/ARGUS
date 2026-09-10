@@ -1,0 +1,220 @@
+
+[KEY POOL STATUS]
+{'google': [{'name': 'GOOGLE_API_KEY', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_2', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_3', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_4', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_5', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_6', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}], 'openrouter': [{'name': 'OPENROUTER_API_KEY', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'OPENROUTER_API_KEY_2', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}]}
+
+[STAGE 1] Planning and Structural Analysis
+----------------------------------------------------
+2026-09-10 08:04:11,331 | ERROR | [KEY_POOL] GOOGLE_API_KEY exhausted
+2026-09-10 08:04:12,308 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+2026-09-10 08:04:13,807 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:04:18,945 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:04:18,987 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:04:19,091 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:04:20,174 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:04:20,299 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+2026-09-10 08:04:20,315 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+Category          : Wooden Crate
+Geometry          : hard_surface
+Blueprint         : wooden_crate (318 loaded)
+Style             : reinforced wooden crate
+Material          : wood and metal
+Scale             : 1.0 m
+Poly budget       : medium
+Export            : glb
+Parts:
+  - body
+  - detail
+  - container body
+  - lid or door
+  - corner posts
+  - ribs or panels
+  - handles/latches
+  - base skids
+  - ... 4 more
+Structure         : Wooden Crate blueprint 'wooden_crate' matched from the structure library. Build it as a recognizable reinforced wooden crate with its required support and signature parts.
+Primary forms:
+  - main body volume
+  - secondary details
+  - hollow box-like volume
+  - reinforced corners
+  - panel/rib pattern
+  - ... 1 more
+Assembly order:
+  - build grounded main body
+  - attach secondary details
+  - build main body
+  - add lid/door
+  - add ribs/corner posts
+  - add handles/latches and base supports
+Attachments:
+  - visible joints connecting all major pieces
+  - lid hinges or rests on rim
+  - handles attach to sides
+  - ribs attach to panels
+Orientation:
+  - Z is up
+  - circular mechanical parts follow their real-world axis
+  - opening faces front/top
+  - base sits on ground
+  - ribs align with edges
+Support           : Flat base, skids, or feet support the container.
+Texture plan:
+  - metal material
+  - subtle roughness and edge wear
+  - painted/wood/plastic body
+  - metal latches
+  - edge wear and panel variation
+Shape plan:
+  - beveled hard-surface edges
+  - rounded or tapered forms where the object is not naturally box-shaped
+  - surface details that break up large plain faces
+  - bevel corners
+  - inset panels
+  - add ribs, hinges, handles, and latches
+  - ... 3 more
+Constraints:
+  - no floating parts
+  - no flat wheels unless explicitly horizontal
+  - container must have readable lid/door/opening
+  - handles/latches must attach
+  - body must be grounded
+  - must read clearly as wooden crate, not a generic primitive or unrelated object
+  - ... 3 more
+[GRAPH_PARTS]["body", "detail", "container body", "lid or door", "corner posts", "ribs or panels", "handles/latches", "base skids", "plank panels", "corner braces", "lid", "metal straps"]
+
+[STAGE 2] Asset Naming
+----------------------------------------------------
+Asset name        : wooden_crate
+Project folder    : wooden_crate(2)
+
+[VISION] Generating reference image in background (Gemini > Pollinations FLUX)...
+
+[STAGE 3] Blender Script Generation
+----------------------------------------------------
+Generation        : LLM codegen (no usable build spec)
+[VISION] Reference image saved -> reference.jpg (114KB)
+2026-09-10 08:04:36,512 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:04:37,768 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:04:38,779 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:04:38,782 | WARNING | [SCRIPT_GEN] Vision-guided generation failed, falling back to text-only
+Script saved      : C:\Users\darpa\Desktop\ARGUS\eval\out\full\runs\wooden_crate(2)\scripts\wooden_crate.py
+
+[STAGE 4] Critic Review
+----------------------------------------------------
+2026-09-10 08:04:48,677 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+Repair required   : no
+Summary           : Critic unavailable; proceeding.
+Critic pass 1     : no repairs needed
+
+[STAGE 5] Blender Execution and Export
+----------------------------------------------------
+Poly budget       : 5,508 -> 4,974 tris (budget 5,000, 1.11x)
+Blender status    : export complete
+GLB               : C:\Users\darpa\Desktop\ARGUS\eval\out\full\final\wooden_crate(2)\wooden_crate.glb
+FBX               : C:\Users\darpa\Desktop\ARGUS\eval\out\full\final\wooden_crate(2)\wooden_crate.fbx
+BLEND             : C:\Users\darpa\Desktop\ARGUS\eval\out\full\final\wooden_crate(2)\wooden_crate.blend
+[PREVIEW IMAGE]
+C:\Users\darpa\Desktop\ARGUS\eval\out\full\final\wooden_crate(2)\wooden_crate_preview.png
+Reference image   : C:\Users\darpa\Desktop\ARGUS\eval\out\full\final\wooden_crate(2)\reference.jpg
+
+[STAGE 54] Best-of-3 Candidate Generation
+----------------------------------------------------
+2026-09-10 08:05:01,885 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:05:03,161 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:05:07,148 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+2026-09-10 08:05:08,547 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:05:11,219 | WARNING | [VISUAL_QA] All vision models failed â€” skipping visual score
+Candidate 1/3: score -1/10
+
+[BEST-OF-N 2/3] generating fresh candidate
+2026-09-10 08:05:15,701 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:05:17,212 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:05:18,424 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:05:18,440 | WARNING | [SCRIPT_GEN] Vision-guided generation failed, falling back to text-only
+Poly budget       : 5,508 -> 4,974 tris (budget 5,000, 1.11x)
+2026-09-10 08:05:39,729 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:05:41,141 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:05:45,182 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:05:46,373 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:05:48,911 | WARNING | [VISUAL_QA] All vision models failed â€” skipping visual score
+Candidate 2/3: score -1/10
+
+[BEST-OF-N 3/3] generating fresh candidate
+2026-09-10 08:05:53,824 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:05:55,015 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:05:56,224 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:05:56,226 | WARNING | [SCRIPT_GEN] Vision-guided generation failed, falling back to text-only
+Poly budget       : 5,508 -> 4,974 tris (budget 5,000, 1.11x)
+2026-09-10 08:06:17,350 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+2026-09-10 08:06:19,036 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:06:23,031 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:06:24,366 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:06:27,000 | WARNING | [VISUAL_QA] All vision models failed â€” skipping visual score
+Candidate 3/3: score -1/10
+
+Best-of-N final   : -1/10 (from 3 candidates)
+
+[STAGE 55] Visual Feedback Loop
+----------------------------------------------------
+2026-09-10 08:06:33,108 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:06:34,524 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:06:38,683 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+2026-09-10 08:06:39,983 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:06:42,584 | WARNING | [VISUAL_QA] All vision models failed â€” skipping visual score
+Visual loop       : skipped (no vision model / render unavailable)
+
+[STAGE 56] Full Regen Attempt 1/3 (score -1 < target 8)
+----------------------------------------------------
+Full regen        : no script produced; stopping outer loop
+
+[STAGE 6] Runtime Topology Validation
+----------------------------------------------------
+Topology source   : inline (measured during the build â€” no extra Blender pass)
+Success           : False
+Severity          : critical
+Meshes            : 55
+Tri faces         : 4974
+Quad faces        : 0
+N-gons            : 0
+Open edges        : 0
+Manifold errors   : 0
+Components        : 1
+Floating parts    : 40
+Grounded          : True
+Topology status   : issues detected
+- 40_floating_mesh_objects
+
+[STAGE 7] Export Quality Summary
+----------------------------------------------------
+Success           : True
+GLB               : 408012 bytes
+FBX               : 730924 bytes
+BLEND             : 206218 bytes
+
+[STAGE 75] Visual Quality Assessment
+----------------------------------------------------
+Visual QA         : skipped (no vision model / render available)
+
+[STAGE 77] Diffusion Texture Paint
+----------------------------------------------------
+2026-09-10 08:07:00,401 | WARNING | [CF_EDIT] error 403: {"errors":[{"message":"AiError: Ai: This account is not allowed to access @cf/runwayml/stable-diffusion-v1-5-img2img. (8a887b76-4d95-4498-b8c1-79d7298938a6)","c
+2026-09-10 08:07:01,679 | WARNING | [NIM_EDIT] error 422: {"detail":"Expected: example_id, got: base64"}
+2026-09-10 08:07:03,016 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:07:04,383 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+2026-09-10 08:07:05,910 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:07:07,341 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:07:08,796 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:07:08,796 | WARNING | [GEMINI_EDIT] no image-edit model available
+2026-09-10 08:07:08,796 | WARNING | [PAINT] view 0 repaint unavailable â€” skipping paint
+Texture paint     : skipped
+
+[STAGE 8] Structure Memory Approval
+----------------------------------------------------
+Memory status     : skipped
+Reason            : runtime topology report failed
+Reference   : reference.jpg
+
+[ARGUS COMPLETE]
+Final Asset : C:\Users\darpa\Desktop\ARGUS\eval\out\full\final\wooden_crate(2)\wooden_crate.glb
+Preview     : C:\Users\darpa\Desktop\ARGUS\eval\out\full\final\wooden_crate(2)\wooden_crate_preview.png
+Project     : wooden_crate(2)

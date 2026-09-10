@@ -56,7 +56,6 @@ from core.blender import (
 )
 from core.mcp_server import (
     execute_blender_code,
-    ping_mcp_server,
     run_argus_mcp_validation,
 )
 from core.structure_library import (
@@ -110,37 +109,34 @@ def _pipeline_deadline() -> float | None:
 # User-initiated cancellation, layered onto the same checkpoints ARGUS_MAX_SECONDS
 # already gates rather than threading a new parameter through every loop
 # (run_visual_improvement_loop, the outer regen loop, run_best_of_n_generation).
-# One process-wide flag is correct here: exactly one generation runs at a time
-# (RunManager's single-flight lock in service/run_manager.py), so there is only
-# ever one pipeline that "cancel" could mean. Cooperative, not instant — it takes
-# effect at the same iteration boundaries a deadline would, not mid-LLM-call or
-# mid-Blender-build; a run cancelled during initial planning (before the first
-# checkpoint) will still take as long as planning takes.
-_CANCEL_EVENT = _threading.Event()
-
-
-def request_cancel() -> None:
-    _CANCEL_EVENT.set()
-
-
-def clear_cancel() -> None:
-    """Call before starting a new run — the flag is process-wide and would
-    otherwise make the next run appear cancelled before it starts."""
-    _CANCEL_EVENT.clear()
-
-
-def is_cancelled() -> bool:
-    return _CANCEL_EVENT.is_set()
+#
+# The state lives in core/cancel.py as a per-run scope, not a module global here.
+# A single process-wide flag was defensible while RunManager's single-flight lock
+# meant only one generation ever ran at a time — but core/batch.py runs N
+# pipelines concurrently in one process, and since core/blender.py now terminates
+# the Blender subprocess on this signal, a shared flag would mean cancelling one
+# batch job killed every other job's render mid-write. See core/cancel.py for why
+# it's a ContextVar scope rather than a thread-local.
+#
+# Still cooperative for the loop checkpoints (it takes effect at the same
+# iteration boundaries a deadline would), but no longer only cooperative: an
+# in-flight Blender build is terminated promptly by core/blender.py's
+# _run_cancellable, so cancelling mid-render no longer waits out the timeout.
+from core.cancel import (  # noqa: E402
+    clear_cancel,
+    is_cancelled,
+    request_cancel,
+)
 
 
 def _past_deadline(deadline: float | None) -> bool:
-    return _CANCEL_EVENT.is_set() or (deadline is not None and time.monotonic() >= deadline)
+    return is_cancelled() or (deadline is not None and time.monotonic() >= deadline)
 
 
 def _stop_reason() -> str:
     """For the log lines at each _past_deadline() checkpoint — same trip wire,
     different cause, worth telling apart in the console/event stream."""
-    return "cancelled by user" if _CANCEL_EVENT.is_set() else "deadline exceeded"
+    return "cancelled by user" if is_cancelled() else "deadline exceeded"
 
 
 LOG_DIR = Path("logs")
@@ -482,6 +478,7 @@ def attempt_repair(
                 name=asset_name,
                 run_id=run_id,
                 iter_num=attempt,
+                poly_max=_poly_max_for(part_data),
             )
 
         if result.success:
@@ -717,11 +714,52 @@ def _texture_bonus(textured_count: int) -> float:
     return min(0.5 * textured_count, cap)
 
 
+def _poly_max_for(part_data) -> int:
+    """Triangle ceiling for this asset's budget, or 0 when enforcement is off.
+
+    The budget was advisory until export-time enforcement existed (see
+    core/blender.py): the prompt asked the model to decimate itself and nothing
+    checked, so shipped assets ran 1.5x-56x over. Reads the same _POLY_TARGETS
+    table the prompt quotes, so the number the model is told and the number
+    actually enforced can never drift apart."""
+    if os.environ.get("ARGUS_POLY_ENFORCE", "1") != "1":
+        return 0
+    from core.prompt import _POLY_TARGETS
+    budget = str((part_data or {}).get("poly_budget", "medium")).lower()
+    if budget not in _POLY_TARGETS:
+        budget = "medium"
+    return _POLY_TARGETS[budget][1]
+
+
+def _poly_penalty(result) -> tuple[float, str]:
+    """Penalty for a build that only met its budget by being crushed.
+
+    Enforcement guarantees the exported asset fits, which would otherwise make
+    over-tessellation invisible to the loop — a 281k-triangle gas pump would
+    quietly become a 5k one and still score 8. Needing a heavy reduction means
+    the *generation* was wrong (dense spheres where flat panels belonged), and
+    the loop should treat that as a defect worth regenerating, not a success.
+    Graduated, and deliberately free up to 4x: some reduction is normal and
+    healthy, since planar dissolve alone often removes coplanar detail at no
+    visual cost at all."""
+    report = getattr(result, "poly", None) or {}
+    reduction = float(report.get("reduction", 1) or 1)
+    if reduction < 4:
+        return 0.0, ""
+    if reduction < 10:
+        return 0.5, f"needed {reduction:.0f}x poly reduction"
+    if reduction < 25:
+        return 1.0, f"needed {reduction:.0f}x poly reduction"
+    return 2.0, f"needed {reduction:.0f}x poly reduction"
+
+
 def _effective_score(score: int, result) -> tuple[float, str, int]:
     penalty, penalty_why = _defect_penalty(result)
+    poly_pen, poly_why = _poly_penalty(result)
     textured = _textured_material_count(result.glb_path)
-    effective = score - penalty + _texture_bonus(textured)
-    return effective, penalty_why, textured
+    effective = score - penalty - poly_pen + _texture_bonus(textured)
+    why = "; ".join(w for w in (penalty_why, poly_why) if w)
+    return effective, why, textured
 
 
 def _accept_candidate(cand_score, best_score, cand_result, best_result) -> tuple[bool, str]:
@@ -827,6 +865,7 @@ def run_best_of_n_generation(
         else:
             cand_result = run_blender(
                 script_path=cand_path, name=asset_name, run_id=run_id, iter_num=_i,
+                poly_max=_poly_max_for(part_data),
             )
         if not cand_result.success or not cand_result.glb_path:
             print(f"Candidate {_i}: failed to build")
@@ -954,6 +993,7 @@ def run_visual_improvement_loop(
         else:
             cand_result = run_blender(
                 script_path=cand_path, name=asset_name, run_id=run_id, iter_num=_it,
+                poly_max=_poly_max_for(part_data),
             )
 
         if not cand_result.success or not cand_result.glb_path:
@@ -1256,6 +1296,7 @@ def run_pipeline(
             script_path=script_path,
             name=asset_name,
             run_id=run_id,
+            poly_max=_poly_max_for(part_data),
         )
 
     if not result.success:
@@ -1395,7 +1436,8 @@ def run_pipeline(
             reset_repair_state()
             _regen_path = save_script(run_dirs["scripts"], asset_name, _fresh,
                                       suffix=f"_regen_{_outer_it}")
-            _regen_result = run_blender(script_path=_regen_path, name=asset_name, run_id=run_id)
+            _regen_result = run_blender(script_path=_regen_path, name=asset_name, run_id=run_id,
+                                        poly_max=_poly_max_for(part_data))
 
             if not _regen_result.success or not _regen_result.glb_path:
                 _rr_s, _rr_r, _rr_p = attempt_repair(

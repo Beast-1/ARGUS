@@ -43,7 +43,9 @@ def _run(monkeypatch, tmp_path, scores, textured=2, severity="clean"):
         p.write_text(script)
         return p
 
-    def fake_run_blender(script_path, name, run_id, iter_num=0):
+    # **kwargs so adding a parameter to run_blender (poly_max, and whatever
+    # comes next) doesn't break every fake in the suite.
+    def fake_run_blender(script_path, name, run_id, iter_num=0, **kwargs):
         return FakeResult(write_glb(tmp_path / f"cand_{iter_num}.glb", textured), severity)
 
     monkeypatch.setattr(main, "_score_render", fake_score_render)

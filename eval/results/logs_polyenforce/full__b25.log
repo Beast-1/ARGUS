@@ -1,0 +1,149 @@
+
+[KEY POOL STATUS]
+{'google': [{'name': 'GOOGLE_API_KEY', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_2', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_3', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_4', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_5', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_6', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}], 'openrouter': [{'name': 'OPENROUTER_API_KEY', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'OPENROUTER_API_KEY_2', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}]}
+
+[STAGE 1] Planning and Structural Analysis
+----------------------------------------------------
+2026-09-10 08:18:43,465 | ERROR | [KEY_POOL] GOOGLE_API_KEY exhausted
+2026-09-10 08:18:44,213 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+2026-09-10 08:18:45,311 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:18:47,510 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:18:47,696 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:18:47,699 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:18:47,709 | WARNING | [KEY_POOL] Waiting 0.5s for cooldown
+2026-09-10 08:18:48,315 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:18:48,779 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+Category          : Wheelbarrow
+Geometry          : hard_surface
+Blueprint         : wheelbarrow (318 loaded)
+Style             : garden wheelbarrow
+Material          : metal, rubber, wood
+Scale             : 1.4 m
+Poly budget       : medium
+Export            : glb
+Parts:
+  - body
+  - detail
+  - basket or platform
+  - handle
+  - wheel set
+  - support frame
+  - axles
+  - feet or caster forks
+  - ... 4 more
+Structure         : Wheelbarrow blueprint 'wheelbarrow' matched from the structure library. Build it as a recognizable garden wheelbarrow with its required support and signature parts.
+Primary forms:
+  - main body volume
+  - secondary details
+  - open basket/platform
+  - tubular push frame
+  - small wheels/casters
+  - ... 1 more
+Assembly order:
+  - build grounded main body
+  - attach secondary details
+  - build basket/platform
+  - attach frame and handle
+  - attach axles or caster forks
+  - add wheels at ground contact
+Attachments:
+  - visible joints connecting all major pieces
+  - handle joins rear frame
+  - wheels attach to axles/forks
+  - basket sits on support frame
+Orientation:
+  - Z is up
+  - circular mechanical parts follow their real-world axis
+  - handle rises at rear
+  - wheels are vertical
+  - platform/basket is level
+Support           : Wheelbase supports the basket load.
+Texture plan:
+  - metal material
+  - subtle roughness and edge wear
+  - metal wire/frame
+  - rubber wheels
+  - plastic handle grips
+Shape plan:
+  - beveled hard-surface edges
+  - rounded or tapered forms where the object is not naturally box-shaped
+  - surface details that break up large plain faces
+  - use thin rods/tubes
+  - add basket rails
+  - round wheel edges
+  - ... 3 more
+Constraints:
+  - no floating parts
+  - no flat wheels unless explicitly horizontal
+  - wheels must attach to frame
+  - basket/platform must be supported
+  - handle must not float
+  - must read clearly as wheelbarrow, not a generic primitive or unrelated object
+  - ... 3 more
+[GRAPH_PARTS]["body", "detail", "basket or platform", "handle", "wheel set", "support frame", "axles", "feet or caster forks", "single front wheel", "tray", "two handles", "rear legs"]
+
+[STAGE 2] Asset Naming
+----------------------------------------------------
+Asset name        : wheelbarrow
+Project folder    : wheelbarrow(4)
+
+[VISION] Generating reference image in background (Gemini > Pollinations FLUX)...
+
+[STAGE 3] Blender Script Generation
+----------------------------------------------------
+Generation        : LLM codegen (no usable build spec)
+[VISION] Reference image saved -> reference.jpg (56KB)
+2026-09-10 08:19:05,015 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:19:06,236 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:19:07,392 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:19:07,392 | WARNING | [SCRIPT_GEN] Vision-guided generation failed, falling back to text-only
+Script saved      : C:\Users\darpa\Desktop\ARGUS\eval\out\full\runs\wheelbarrow(4)\scripts\wheelbarrow.py
+
+[STAGE 4] Critic Review
+----------------------------------------------------
+Repair required   : yes
+Summary           : Script too minimal: only 2 apparent mesh object(s) (need at least 3 â€” use create_cone/create_cylinder helpers or direct bpy.data.objects.new() calls for each named part)
+Issues:
+  - Script too minimal: only 2 apparent mesh object(s) (need at least 3 â€” use create_cone/create_cylinder helpers or direct bpy.data.objects.new() calls for each named part)
+Critic pass 1     : issuing repair patch
+Critic pass 1     : repair unavailable; proceeding with best available script
+
+[STAGE 5] Blender Execution and Export
+----------------------------------------------------
+Blender status    : failed
+Error type        : EmptyExport
+Message           : GLB is empty or missing (3692 bytes). Script ran without errors and gltf export was called, but the file is too small to contain geometry. Ensure bpy.data.objects.new() objects are linked to the collection (bpy.context.collection.objects.link(obj)) and that no bpy.ops.object.delete() is called after building geometry.
+
+[REPAIR 1/5]
+Error type        : EmptyExport
+Message           : GLB is empty or missing (3692 bytes). Script ran without errors and gltf export was called, but the file is too small to contain geometry. Ensure bpy.data.objects.new() objects are linked to the collection (bpy.context.collection.objects.link(obj)) and that no bpy.ops.object.delete() is called after building geometry.
+2026-09-10 08:19:37,111 | WARNING | [REPAIR] Empty patch
+Repair patch      : empty
+
+[REPAIR 2/5]
+Error type        : UnknownError
+Message           : GLB is empty or missing (3692 bytes). Script ran without errors and gltf export was called, but the file is too small to contain geometry. Ensure bpy.data.objects.new() objects are linked to the collection (bpy.context.collection.objects.link(obj)) and that no bpy.ops.object.delete() is called after building geometry.
+2026-09-10 08:19:44,571 | WARNING | [REPAIR] Empty patch
+Repair patch      : empty
+
+[REPAIR 3/5]
+Error type        : UnknownError
+Message           : GLB is empty or missing (3692 bytes). Script ran without errors and gltf export was called, but the file is too small to contain geometry. Ensure bpy.data.objects.new() objects are linked to the collection (bpy.context.collection.objects.link(obj)) and that no bpy.ops.object.delete() is called after building geometry.
+2026-09-10 08:19:44,571 | WARNING | [REPAIR] Duplicate repair failure; refusing to replay broken script
+2026-09-10 08:19:44,571 | WARNING | [REPAIR] Empty patch
+Repair patch      : empty
+
+[REPAIR 4/5]
+Error type        : UnknownError
+Message           : GLB is empty or missing (3692 bytes). Script ran without errors and gltf export was called, but the file is too small to contain geometry. Ensure bpy.data.objects.new() objects are linked to the collection (bpy.context.collection.objects.link(obj)) and that no bpy.ops.object.delete() is called after building geometry.
+2026-09-10 08:19:44,571 | WARNING | [REPAIR] Duplicate repair failure; refusing to replay broken script
+2026-09-10 08:19:44,571 | WARNING | [REPAIR] Empty patch
+Repair patch      : empty
+
+[REPAIR 5/5]
+Error type        : UnknownError
+Message           : GLB is empty or missing (3692 bytes). Script ran without errors and gltf export was called, but the file is too small to contain geometry. Ensure bpy.data.objects.new() objects are linked to the collection (bpy.context.collection.objects.link(obj)) and that no bpy.ops.object.delete() is called after building geometry.
+2026-09-10 08:19:44,571 | WARNING | [REPAIR] Duplicate repair failure; refusing to replay broken script
+2026-09-10 08:19:44,571 | WARNING | [REPAIR] Empty patch
+Repair patch      : empty
+Repair status     : failed

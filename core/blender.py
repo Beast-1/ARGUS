@@ -1,8 +1,6 @@
 
 from __future__ import annotations
 
-import ast
-import hashlib
 import json
 import logging
 import os
@@ -15,6 +13,8 @@ from dataclasses import dataclass, field, asdict
 from enum import Enum
 from pathlib import Path
 from typing import Optional
+
+from core.script_safety import sanitize_generated_code
 
 
 try:
@@ -130,6 +130,9 @@ class ExportResult:
 
     traceback: Optional[dict] = None
     mcp: Optional[dict] = None
+    # Poly-budget enforcement report (before/after triangles, whether the
+    # export landed inside its budget). None when enforcement was off.
+    poly: Optional[dict] = None
 
     repair_class: str = RepairClass.UNKNOWN.value
 
@@ -142,40 +145,14 @@ class ExportResult:
         return asdict(self)
 
 
-_MD_FENCE_RE = re.compile(
-    r"^```(?:python)?\s*$",
-    re.MULTILINE,
-)
-
-
-def sanitize_script(script: str) -> str:
-
-    if not script:
-        return ""
-
-    script = _MD_FENCE_RE.sub("", script)
-    script = script.replace("```", "")
-
-    return script.strip()
-
-
-_FORBIDDEN_MODULE_ROOTS = {
-    "core",
-    "utils",
-    "ml",
-    "argus",
-}
-
-
-def validate_script(script: str):
-
-    try:
-        ast.parse(script)
-        return True
-
-    except SyntaxError:
-        return False
-
+# sanitize_script/validate_script/_FORBIDDEN_MODULE_ROOTS used to live here as a
+# second, independent (and weaker — validate_script was a bare ast.parse syntax
+# check with no safety denylist at all) copy of what core/script_safety.py now
+# does once, shared with core/llm.py. validate_script and _FORBIDDEN_MODULE_ROOTS
+# were dead code — defined, never called from anywhere in the repo — which made
+# it easy to mistake this module for having its own enforcement point when it
+# didn't. sanitize_generated_code below is the one real function that had actual
+# callers, now imported instead of duplicated with a different regex.
 
 _TRACEBACK_HEADER = re.compile(r"Traceback \(most recent call last\)")
 _LOCATION_RE = re.compile(r'File "([^"]+)", line (\d+)')
@@ -373,6 +350,7 @@ def build_export_script(
     script_path,
     name,
     run_id,
+    poly_max: int = 0,
 ):
 
     script_path = Path(script_path)
@@ -381,7 +359,7 @@ def build_export_script(
         encoding="utf-8"
     )
 
-    raw_script = sanitize_script(raw_script)
+    raw_script = sanitize_generated_code(raw_script)
 
     generated_block = _embed_script_safely(raw_script)
 
@@ -408,10 +386,74 @@ def build_export_script(
 
     footer = textwrap.dedent(f"""
     import math as _math
+    import json as _json
     _argus_meshes = [
         o for o in bpy.data.objects
         if o.type == "MESH"
     ]
+
+    def _argus_tri_total(_objs=None):
+        _t = 0
+        for _o in (_argus_meshes if _objs is None else _objs):
+            for _p in _o.data.polygons:
+                _t += max(1, len(_p.vertices) - 2)
+        return _t
+
+    # Per-object triangle floor, scaled to how many objects share the budget.
+    # A fixed floor is unsatisfiable for part-heavy assets: a 35-part fire
+    # hydrant against a flat 200-triangle floor reserves 7,000 triangles for a
+    # 5,000 budget, leaving the allocator nothing to distribute -- it gave up
+    # and left that asset 31% over. Half the fair share keeps the floor
+    # meaningful without exceeding the budget; 24 is the hard minimum below
+    # which a part stops reading as a shape at all (a cube is 12).
+    def _argus_poly_floor(_n_objects, _poly_max):
+        return max(24, min(200, _poly_max // max(1, _n_objects) // 2))
+
+    # Water-fill the budget across objects, honouring the per-object floor.
+    # A single scene-wide ratio overshoots: any object small enough that
+    # floor/tris exceeds that ratio gets clamped back up to the floor, and
+    # those triangles have to come out of everyone else's share. Note the
+    # distinction between an object already under the floor (costs its full
+    # size, cannot be decimated) and one clamped *to* the floor (costs only
+    # the floor) -- charging the latter its original size makes pinning raise
+    # the fixed cost, lowering the ratio, pinning more, until everything is
+    # pinned and nothing is decimated at all.
+    def _argus_allocate(_per_obj, _poly_max, _floor):
+        _untouchable = set()
+        for _n in _per_obj:
+            if _per_obj[_n] <= _floor:
+                _untouchable.add(_n)
+        _clamped = set()
+        _ratio = 1.0
+        for _ in range(12):
+            _fixed = _floor * len(_clamped)
+            for _n in _untouchable:
+                _fixed += _per_obj[_n]
+            _flexible = 0
+            for _n in _per_obj:
+                if _n not in _untouchable and _n not in _clamped:
+                    _flexible += _per_obj[_n]
+            if _flexible <= 0:
+                break
+            _ratio = max(0.0, _poly_max - _fixed) / _flexible
+            _newly = set()
+            for _n in _per_obj:
+                if _n in _untouchable or _n in _clamped:
+                    continue
+                if _per_obj[_n] * _ratio < _floor:
+                    _newly.add(_n)
+            if not _newly:
+                break
+            _clamped |= _newly
+        _out = dict()
+        for _n in _per_obj:
+            if _n in _untouchable:
+                _out[_n] = 1.0
+            elif _n in _clamped:
+                _out[_n] = float(_floor) / _per_obj[_n]
+            else:
+                _out[_n] = min(1.0, _ratio)
+        return _out, _ratio
 
     if not _argus_meshes:
         raise RuntimeError(
@@ -806,6 +848,85 @@ def build_export_script(
         except Exception as _tri_exc:
             print("[EXPORT TRI skip] " + str(_tri_exc))
 
+    # ── Poly-budget enforcement (export only) ────────────────────────────────
+    # The .blend above is saved BEFORE this, so the editable source keeps full
+    # detail; only the shipped GLB is budgeted.
+    #
+    # Until this existed the budget was advisory: a prompt asked the model to
+    # emit its own dissolve_limit snippet and nothing verified the result, so
+    # real output ran 1.5x-56x over the "game-ready" ceiling (a gas pump shipped
+    # at 281,182 triangles against a 5,000 budget) and the vision scorer, which
+    # never sees a triangle count, happily scored it.
+    #
+    # Two stages, in this order for a reason. Planar dissolve first, because it
+    # removes coplanar detail at essentially no silhouette cost and does most of
+    # the work for free (281,182 -> 11,223 on that gas pump). Collapse only for
+    # whatever remains: collapse treats a dense sphere exactly like a flat box
+    # face, and running it alone at the resulting 56x ratio left the boxy body
+    # perfect while crumpling the domed top into jagged garbage. Dissolving
+    # first leaves a 0.29 collapse ratio instead of 0.015 — 20x gentler on the
+    # curved parts that actually need their triangles.
+    _poly_max = {poly_max}
+    _poly_before = _argus_tri_total()
+    _poly_after_planar = _poly_before
+    _poly_ratio = None
+    if _poly_max > 0 and _poly_before > _poly_max:
+        for _pm in _argus_meshes:
+            try:
+                bpy.context.view_layer.objects.active = _pm
+                _pmod = _pm.modifiers.new("ARGUS_POLY_PLANAR", "DECIMATE")
+                _pmod.decimate_type = "DISSOLVE"
+                _pmod.angle_limit = _math.radians(5.0)
+                bpy.ops.object.modifier_apply(modifier=_pmod.name)
+            except Exception as _pl_exc:
+                print("[POLY planar skip] " + str(_pl_exc))
+        # Dissolve leaves ngons; re-triangulate so the count and the export agree.
+        for _pm in _argus_meshes:
+            try:
+                _pb = _bm_tri_mod.new()
+                _pb.from_mesh(_pm.data)
+                _bm_tri_mod.ops.triangulate(_pb, faces=_pb.faces[:])
+                _pb.to_mesh(_pm.data)
+                _pb.free()
+                _pm.data.update()
+            except Exception:
+                pass
+        _poly_after_planar = _argus_tri_total()
+
+        # Up to three collapse rounds: DECIMATE lands approximately on its
+        # ratio, and per-object rounding across many parts accumulated to +16%
+        # in testing, so a corrective round is what actually hits the target.
+        for _attempt in range(3):
+            if _argus_tri_total() <= _poly_max:
+                break
+            _per_obj = dict()
+            for _pm in _argus_meshes:
+                _per_obj[_pm.name] = _argus_tri_total([_pm])
+            _floor = _argus_poly_floor(len(_per_obj), _poly_max)
+            _ratios, _poly_ratio = _argus_allocate(_per_obj, _poly_max, _floor)
+            for _pm in _argus_meshes:
+                _r = _ratios.get(_pm.name, 1.0)
+                if _r >= 1.0 or _per_obj.get(_pm.name, 0) <= _floor:
+                    continue
+                try:
+                    bpy.context.view_layer.objects.active = _pm
+                    _dmod = _pm.modifiers.new("ARGUS_POLY_BUDGET", "DECIMATE")
+                    _dmod.decimate_type = "COLLAPSE"
+                    _dmod.ratio = _r
+                    bpy.ops.object.modifier_apply(modifier=_dmod.name)
+                except Exception as _dc_exc:
+                    print("[POLY collapse skip] " + str(_dc_exc))
+
+    _poly_final = _argus_tri_total()
+    print("ARGUS_POLY_REPORT:" + _json.dumps(dict(
+        budget=_poly_max,
+        before=_poly_before,
+        after_planar=_poly_after_planar,
+        after=_poly_final,
+        within_budget=bool(_poly_max <= 0 or _poly_final <= _poly_max),
+        reduction=round(_poly_before / max(1, _poly_final), 2),
+    )))
+
     bpy.ops.export_scene.gltf(
         filepath={json.dumps(str(glb_path))},
         export_format='GLB',
@@ -892,70 +1013,58 @@ def build_export_script(
     return "\n\n".join([header, generated_block, _RIG_STAGE, footer, _MCP_ANALYSIS_BODY])
 
 
-def export_format_from_blend(
-    blend_path: "Path",
-    fmt: str,
-    out_path: "Path",
-) -> bool:
+_CANCEL_POLL_SEC = 0.4
+_TERMINATE_GRACE_SEC = 5.0
+
+
+def _run_cancellable(cmd, *, timeout, **popen_kwargs):
+    """subprocess.run()-compatible (returns a CompletedProcess, raises
+    TimeoutExpired on timeout) — but polls the pipeline's cancel flag every
+    ~0.4s and terminates (then kills, after a grace period) the Blender process
+    the moment Cancel is requested, instead of leaving it running untouched
+    until the full multi-minute timeout elapses.
+
+    Previously every Blender subprocess.run() call here used a hard timeout as
+    its only exit path: clicking Cancel mid-render set a flag nothing checked
+    until the pipeline's NEXT loop-boundary checkpoint (main.py's
+    _past_deadline()), so the UI could show "Cancelling..." for up to
+    BLENDER_EXEC_TIMEOUT (5 minutes by default) while the subprocess — the step
+    that dominates a run's wall-clock time — kept running untouched.
     """
-    Open a saved .blend headlessly and export to 'glb' or 'fbx'.
-    Returns True on success, False on failure.
-    """
-    blend_path = Path(blend_path)
-    out_path   = Path(out_path)
+    from main import is_cancelled  # deferred: main.py imports core.blender at load time
 
-    if not blend_path.exists():
-        logger.error("[EXPORT] .blend not found: %s", blend_path)
-        return False
+    popen_kwargs.setdefault("stdout", subprocess.PIPE)
+    popen_kwargs.setdefault("stderr", subprocess.PIPE)
+    popen_kwargs.setdefault("text", True)
+    proc = subprocess.Popen(cmd, **popen_kwargs)
+    start = time.monotonic()
 
-    if fmt == "glb":
-        export_cmd = textwrap.dedent(f"""
-        bpy.ops.export_scene.gltf(
-            filepath={json.dumps(str(out_path))},
-            export_format='GLB',
-            use_selection=False,
-        )
-        """).strip()
-    elif fmt == "fbx":
-        export_cmd = textwrap.dedent(f"""
-        bpy.ops.export_scene.fbx(
-            filepath={json.dumps(str(out_path))},
-            use_selection=False,
-        )
-        """).strip()
-    else:
-        logger.error("[EXPORT] Unknown format: %s", fmt)
-        return False
+    while True:
+        try:
+            stdout, stderr = proc.communicate(timeout=_CANCEL_POLL_SEC)
+            return subprocess.CompletedProcess(cmd, proc.returncode, stdout, stderr)
+        except subprocess.TimeoutExpired:
+            pass
 
-    script = textwrap.dedent(f"""
-    import bpy, os
-    os.makedirs({json.dumps(str(out_path.parent))}, exist_ok=True)
-    bpy.ops.wm.open_mainfile(filepath={json.dumps(str(blend_path))})
-    {export_cmd}
-    print("[EXPORT_DONE] {fmt.upper()} -> " + {json.dumps(str(out_path))})
-    """).strip()
+        if is_cancelled():
+            logger.info("[CANCEL] terminating Blender subprocess (pid %d)", proc.pid)
+            proc.terminate()
+            try:
+                stdout, stderr = proc.communicate(timeout=_TERMINATE_GRACE_SEC)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                stdout, stderr = proc.communicate()
+            raise subprocess.TimeoutExpired(
+                cmd, round(time.monotonic() - start, 1), output=stdout, stderr=stderr,
+            )
 
-    import tempfile
-    with tempfile.NamedTemporaryFile(
-        delete=False, suffix=".py", mode="w", encoding="utf-8"
-    ) as fh:
-        fh.write(script)
-        tmp = fh.name
-
-    try:
-        result = subprocess.run(
-            [BLENDER_PATH, "--background", "--python", tmp],
-            capture_output=True, text=True, timeout=120,
-        )
-        success = "[EXPORT_DONE]" in (result.stdout or "")
-        if not success:
-            logger.warning("[EXPORT] failed stdout: %s", result.stdout[-400:])
-        return success
-    except Exception as exc:
-        logger.error("[EXPORT] exception: %s", exc)
-        return False
-    finally:
-        Path(tmp).unlink(missing_ok=True)
+        if time.monotonic() - start >= timeout:
+            proc.kill()
+            try:
+                stdout, stderr = proc.communicate(timeout=_TERMINATE_GRACE_SEC)
+            except subprocess.TimeoutExpired:
+                stdout, stderr = "", ""
+            raise subprocess.TimeoutExpired(cmd, timeout, output=stdout, stderr=stderr)
 
 
 def run_blender(
@@ -965,6 +1074,7 @@ def run_blender(
     fix_path=None,
     iter_num=None,
     seed=ARGUS_SEED,
+    poly_max: int = 0,
 ):
 
     t0 = time.monotonic()
@@ -973,6 +1083,7 @@ def run_blender(
         script_path,
         name,
         run_id,
+        poly_max=poly_max,
     )
 
     with tempfile.NamedTemporaryFile(
@@ -988,14 +1099,13 @@ def run_blender(
 
     try:
 
-        result = subprocess.run(
+        result = _run_cancellable(
             [
                 BLENDER_PATH,
                 "--background",
                 "--python",
                 temp_path,
             ],
-            capture_output=True,
             text=True,
             encoding="utf-8",
             errors="replace",
@@ -1095,6 +1205,25 @@ def run_blender(
             elapsed_sec=elapsed,
         )
 
+    _poly_inline = None
+    _poly_match = _POLY_REPORT_RE.search(result.stdout or "")
+    if _poly_match:
+        try:
+            _poly_inline = json.loads(_poly_match.group(1))
+        except ValueError:
+            _poly_inline = None
+    if _poly_inline:
+        # Surfaced on the pipeline's own stdout, not just captured into the
+        # result: budget enforcement that silently rewrites the shipped mesh is
+        # exactly the kind of thing an operator should be able to see happening.
+        _pb, _pa = _poly_inline.get("before", 0), _poly_inline.get("after", 0)
+        if _pb != _pa:
+            print(f"Poly budget       : {_pb:,} -> {_pa:,} tris "
+                  f"(budget {_poly_inline.get('budget', 0):,}, "
+                  f"{_poly_inline.get('reduction', 1)}x)")
+        elif _poly_inline.get("budget"):
+            print(f"Poly budget       : {_pa:,} tris (within budget, untouched)")
+
     _mcp_inline = None
     _mcp_match = _MCP_REPORT_RE.search(result.stdout or "")
     if _mcp_match:
@@ -1117,6 +1246,7 @@ def run_blender(
         preview_bytes=preview_path.stat().st_size if preview_path.exists() else 0,
         elapsed_sec=elapsed,
         mcp=_mcp_inline,
+        poly=_poly_inline,
     )
 
 
@@ -1352,6 +1482,11 @@ _MCP_REPORT_RE = re.compile(
     re.MULTILINE,
 )
 
+_POLY_REPORT_RE = re.compile(
+    r"^ARGUS_POLY_REPORT:(.+)$",
+    re.MULTILINE,
+)
+
 
 def run_mcp_analysis(
     script_path,
@@ -1393,14 +1528,13 @@ bpy.context.view_layer.update()
 
     try:
 
-        result = subprocess.run(
+        result = _run_cancellable(
             [
                 BLENDER_PATH,
                 "--background",
                 "--python",
                 temp_path,
             ],
-            capture_output=True,
             text=True,
             encoding="utf-8",
             timeout=BLENDER_MCP_TIMEOUT,
@@ -1627,9 +1761,9 @@ def render_multiview_grid(
         })
         script_path.write_text(_MULTIVIEW_RENDER_SCRIPT, encoding="utf-8")
         try:
-            result = subprocess.run(
+            result = _run_cancellable(
                 [BLENDER_PATH, "--background", "--python", str(script_path), "--", args_json],
-                capture_output=True, text=True, timeout=timeout,
+                timeout=timeout,
             )
             if out_path.exists() and out_path.stat().st_size > 512:
                 return out_path.read_bytes()

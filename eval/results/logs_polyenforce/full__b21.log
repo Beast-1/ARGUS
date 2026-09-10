@@ -1,0 +1,159 @@
+
+[KEY POOL STATUS]
+{'google': [{'name': 'GOOGLE_API_KEY', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_2', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_3', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_4', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_5', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_6', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}], 'openrouter': [{'name': 'OPENROUTER_API_KEY', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'OPENROUTER_API_KEY_2', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}]}
+
+[STAGE 1] Planning and Structural Analysis
+----------------------------------------------------
+2026-09-10 08:16:38,665 | ERROR | [KEY_POOL] GOOGLE_API_KEY exhausted
+2026-09-10 08:16:39,774 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+2026-09-10 08:16:40,632 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:16:42,695 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:16:42,996 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:16:43,301 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:16:43,304 | WARNING | [KEY_POOL] Waiting 0.5s for cooldown
+2026-09-10 08:16:43,823 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:16:43,997 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:16:44,823 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+Category          : Steam Locomotive
+Geometry          : hard_surface
+Blueprint         : steam_locomotive (318 loaded)
+Memory            : 2 strict success run(s)
+Style             : classic steam-powered railway locomotive with tender
+Material          : black boiler, red wheels, brass dome, chrome fittings
+Scale             : 12.0 m
+Poly budget       : medium
+Export            : glb
+Parts:
+  - body
+  - detail
+  - main housing
+  - pipes/shafts
+  - flanges/brackets
+  - bolts
+  - base plate
+  - control/detail panels
+  - ... 37 more
+Structure         : Steam Locomotive blueprint 'steam_locomotive' matched from the structure library. Build it as a recognizable classic steam-powered railway locomotive with tender with its required support and signature parts.
+Primary forms:
+  - main body volume
+  - secondary details
+  - heavy machine body
+  - cylindrical pipes/shafts
+  - flat mounting plates
+  - ... 11 more
+Assembly order:
+  - build grounded main body
+  - attach secondary details
+  - build base plate
+  - mount main housing
+  - attach pipes/shafts/flanges
+  - add bolts and panels
+  - ... 26 more
+Attachments:
+  - visible joints connecting all major pieces
+  - flanges overlap pipe ends
+  - bolts sit on plates
+  - housing bolts to base
+  - bolted wheel axles to frame
+  - welded boiler to frame
+  - ... 16 more
+Orientation:
+  - Z is up
+  - circular mechanical parts follow their real-world axis
+  - base is grounded
+  - pipes follow real axes
+  - controls face outward
+  - Locomotive length (X-axis) from front to back
+  - ... 9 more
+Support           : Base plate and brackets carry the heavy industrial body.
+Texture plan:
+  - metal material
+  - subtle roughness and edge wear
+  - painted metal
+  - brushed/chrome shafts
+  - rubber gaskets
+  - edge grime/wear
+  - ... 11 more
+Shape plan:
+  - beveled hard-surface edges
+  - rounded or tapered forms where the object is not naturally box-shaped
+  - surface details that break up large plain faces
+  - bevel housings
+  - use cylinders for pipes
+  - add flanges, bolts, ribs, and panels
+  - ... 14 more
+Constraints:
+  - no floating parts
+  - no flat wheels unless explicitly horizontal
+  - pipes/shafts must connect to housing
+  - base must support body
+  - flanges and bolts must be visible
+  - must read clearly as steam locomotive, not a generic primitive or unrelated object
+  - ... 15 more
+[GRAPH_PARTS]["body", "detail", "main housing", "pipes/shafts", "flanges/brackets", "bolts", "base plate", "control/detail panels", "boiler barrel", "smokebox", "chimney stack", "steam dome", "sand dome", "driving wheels", "coupling rods", "piston cylinders", "leading wheels", "cab", "running boards", "cow catcher", "tender", "headlamp", "Frame", "Drive Wheels", "Pilot Wheels", "Cylinders", "Connecting Rods", "Boiler", "Smokebox Door", "Smokestack", "Cab Base", "Headlight", "Whistle", "Handrails", "driving_wheel", "trailing_wheel", "chassis_frame", "cylinder_block", "smokebox_door", "funnel", "sand_dome", "steam_dome", "boiler_handrail", "boiler_handrail_stanchion", "cab_handrail"]
+
+[STAGE 2] Asset Naming
+----------------------------------------------------
+Asset name        : steam_locomotive_engine
+Project folder    : steam_locomotive_engine(6)
+
+[VISION] Generating reference image in background (Gemini > Pollinations FLUX)...
+
+[STAGE 3] Blender Script Generation
+----------------------------------------------------
+Generation        : LLM codegen (no usable build spec)
+[VISION] Reference image saved -> reference.jpg (154KB)
+2026-09-10 08:17:02,874 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:17:04,396 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:17:05,808 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:17:05,808 | WARNING | [SCRIPT_GEN] Vision-guided generation failed, falling back to text-only
+Script saved      : C:\Users\darpa\Desktop\ARGUS\eval\out\full\runs\steam_locomotive_engine(6)\scripts\steam_locomotive_engine.py
+
+[STAGE 4] Critic Review
+----------------------------------------------------
+Repair required   : yes
+Summary           : Script too minimal: only 2 apparent mesh object(s) (need at least 3 â€” use create_cone/create_cylinder helpers or direct bpy.data.objects.new() calls for each named part)
+Issues:
+  - Script too minimal: only 2 apparent mesh object(s) (need at least 3 â€” use create_cone/create_cylinder helpers or direct bpy.data.objects.new() calls for each named part)
+Critic pass 1     : issuing repair patch
+Critic pass 1     : repair unavailable; proceeding with best available script
+
+[STAGE 5] Blender Execution and Export
+----------------------------------------------------
+Blender status    : failed
+Error type        : EmptyExport
+Message           : GLB is empty or missing (3692 bytes). Script ran without errors and gltf export was called, but the file is too small to contain geometry. Ensure bpy.data.objects.new() objects are linked to the collection (bpy.context.collection.objects.link(obj)) and that no bpy.ops.object.delete() is called after building geometry.
+
+[REPAIR 1/5]
+Error type        : EmptyExport
+Message           : GLB is empty or missing (3692 bytes). Script ran without errors and gltf export was called, but the file is too small to contain geometry. Ensure bpy.data.objects.new() objects are linked to the collection (bpy.context.collection.objects.link(obj)) and that no bpy.ops.object.delete() is called after building geometry.
+2026-09-10 08:17:34,416 | WARNING | [REPAIR] Empty patch
+Repair patch      : empty
+
+[REPAIR 2/5]
+Error type        : UnknownError
+Message           : GLB is empty or missing (3692 bytes). Script ran without errors and gltf export was called, but the file is too small to contain geometry. Ensure bpy.data.objects.new() objects are linked to the collection (bpy.context.collection.objects.link(obj)) and that no bpy.ops.object.delete() is called after building geometry.
+2026-09-10 08:17:42,187 | WARNING | [REPAIR] Empty patch
+Repair patch      : empty
+
+[REPAIR 3/5]
+Error type        : UnknownError
+Message           : GLB is empty or missing (3692 bytes). Script ran without errors and gltf export was called, but the file is too small to contain geometry. Ensure bpy.data.objects.new() objects are linked to the collection (bpy.context.collection.objects.link(obj)) and that no bpy.ops.object.delete() is called after building geometry.
+2026-09-10 08:17:42,187 | WARNING | [REPAIR] Duplicate repair failure; refusing to replay broken script
+2026-09-10 08:17:42,187 | WARNING | [REPAIR] Empty patch
+Repair patch      : empty
+
+[REPAIR 4/5]
+Error type        : UnknownError
+Message           : GLB is empty or missing (3692 bytes). Script ran without errors and gltf export was called, but the file is too small to contain geometry. Ensure bpy.data.objects.new() objects are linked to the collection (bpy.context.collection.objects.link(obj)) and that no bpy.ops.object.delete() is called after building geometry.
+2026-09-10 08:17:42,187 | WARNING | [REPAIR] Duplicate repair failure; refusing to replay broken script
+2026-09-10 08:17:42,187 | WARNING | [REPAIR] Empty patch
+Repair patch      : empty
+
+[REPAIR 5/5]
+Error type        : UnknownError
+Message           : GLB is empty or missing (3692 bytes). Script ran without errors and gltf export was called, but the file is too small to contain geometry. Ensure bpy.data.objects.new() objects are linked to the collection (bpy.context.collection.objects.link(obj)) and that no bpy.ops.object.delete() is called after building geometry.
+2026-09-10 08:17:42,187 | WARNING | [REPAIR] Duplicate repair failure; refusing to replay broken script
+2026-09-10 08:17:42,187 | WARNING | [REPAIR] Empty patch
+Repair patch      : empty
+Repair status     : failed

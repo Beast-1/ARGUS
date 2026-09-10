@@ -275,10 +275,3 @@ def score_spec(spec: dict, prompt: str = "") -> tuple[float, list[str]]:
         reasons.append(f"{coincident} coincident duplicate part(s)")
 
     return max(0.0, min(100.0, score)), reasons
-
-
-def pick_best(candidates: list[dict], prompt: str = "") -> tuple[int, list[tuple[float, list[str]]]]:
-    """Score a list of validated specs; return (best_index, all_scorings)."""
-    scored = [score_spec(c, prompt) for c in candidates]
-    best = max(range(len(scored)), key=lambda i: scored[i][0])
-    return best, scored

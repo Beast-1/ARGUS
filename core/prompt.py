@@ -885,8 +885,12 @@ POLY BUDGET — soft decimate, never assert/crash (add after mesh.update()):
       _bm2.free()
       mesh.update()
       _tri_count = sum(len(p.vertices) - 2 for p in mesh.polygons)
-  # quads are preferred — an all-quad mesh uses half the face count of a
-  # triangulated mesh for the same silhouette. A small overage is acceptable.
+  # Build in quads. Not for render cost — a quad is drawn as two triangles
+  # either way, so quads buy no GPU budget — but because they subdivide,
+  # deform and reduce predictably, and the .blend is an editable deliverable.
+  # The exported GLB is triangulated and held to its budget automatically, so
+  # do not hand-write decimation: aim for the target with sensible segment
+  # counts instead of dense primitives you expect something else to thin out.
 
 {geometry_rules}
 

@@ -1,0 +1,150 @@
+
+[KEY POOL STATUS]
+{'google': [{'name': 'GOOGLE_API_KEY', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_2', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_3', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_4', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_5', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_6', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}], 'openrouter': [{'name': 'OPENROUTER_API_KEY', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'OPENROUTER_API_KEY_2', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}]}
+
+[STAGE 1] Planning and Structural Analysis
+----------------------------------------------------
+2026-09-10 08:17:43,377 | ERROR | [KEY_POOL] GOOGLE_API_KEY exhausted
+2026-09-10 08:17:44,179 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+2026-09-10 08:17:45,596 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:17:47,601 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:17:47,844 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:17:48,163 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:17:48,163 | WARNING | [KEY_POOL] Waiting 0.0s for cooldown
+2026-09-10 08:17:48,670 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:17:48,844 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:17:49,598 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+Category          : Desk Lamp
+Geometry          : hard_surface
+Blueprint         : desk_lamp (318 loaded)
+Style             : adjustable desk lamp
+Material          : metal and plastic
+Scale             : 1.0 m
+Poly budget       : medium
+Export            : glb
+Parts:
+  - body
+  - detail
+  - vertical pole/mast
+  - base plate or buried foot
+  - crossarms/brackets
+  - mounted fixtures
+  - bolts/collars
+  - base
+  - ... 3 more
+Structure         : Desk Lamp blueprint 'desk_lamp' matched from the structure library. Build it as a recognizable adjustable desk lamp with its required support and signature parts.
+Primary forms:
+  - main body volume
+  - secondary details
+  - tall vertical cylinder or tapered mast
+  - horizontal arms
+  - small mounted equipment
+  - ... 1 more
+Assembly order:
+  - build grounded main body
+  - attach secondary details
+  - build base
+  - raise pole/mast
+  - attach arms/brackets
+  - attach fixtures and collars
+Attachments:
+  - visible joints connecting all major pieces
+  - pole penetrates base
+  - arms clamp to pole
+  - fixtures attach to arms/brackets
+Orientation:
+  - Z is up
+  - circular mechanical parts follow their real-world axis
+  - pole is vertical
+  - arms are horizontal
+  - base touches ground
+Support           : Base plate, foot, or ground embed keeps pole upright.
+Texture plan:
+  - metal material
+  - subtle roughness and edge wear
+  - painted metal/wood/concrete pole
+  - metal brackets
+  - weathering near base
+Shape plan:
+  - beveled hard-surface edges
+  - rounded or tapered forms where the object is not naturally box-shaped
+  - surface details that break up large plain faces
+  - taper or segment pole
+  - add collars, bolts, and mounted details
+  - use part-appropriate geometry instead of one generic cube helper for every visible part
+  - ... 2 more
+Constraints:
+  - no floating parts
+  - no flat wheels unless explicitly horizontal
+  - pole must be vertical and grounded
+  - fixtures must attach
+  - arms must not float
+  - must read clearly as desk lamp, not a generic primitive or unrelated object
+  - ... 3 more
+[GRAPH_PARTS]["body", "detail", "vertical pole/mast", "base plate or buried foot", "crossarms/brackets", "mounted fixtures", "bolts/collars", "base", "articulated arms", "lamp shade", "switch"]
+
+[STAGE 2] Asset Naming
+----------------------------------------------------
+Asset name        : anglepoise_desk_lamp
+Project folder    : anglepoise_desk_lamp(5)
+
+[VISION] Generating reference image in background (Gemini > Pollinations FLUX)...
+
+[STAGE 3] Blender Script Generation
+----------------------------------------------------
+Generation        : LLM codegen (no usable build spec)
+[VISION] Reference image saved -> reference.jpg (35KB)
+2026-09-10 08:18:04,081 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:18:04,923 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:18:06,114 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:18:06,114 | WARNING | [SCRIPT_GEN] Vision-guided generation failed, falling back to text-only
+Script saved      : C:\Users\darpa\Desktop\ARGUS\eval\out\full\runs\anglepoise_desk_lamp(5)\scripts\anglepoise_desk_lamp.py
+
+[STAGE 4] Critic Review
+----------------------------------------------------
+Repair required   : yes
+Summary           : Script too minimal: only 2 apparent mesh object(s) (need at least 3 â€” use create_cone/create_cylinder helpers or direct bpy.data.objects.new() calls for each named part)
+Issues:
+  - Script too minimal: only 2 apparent mesh object(s) (need at least 3 â€” use create_cone/create_cylinder helpers or direct bpy.data.objects.new() calls for each named part)
+Critic pass 1     : issuing repair patch
+Critic pass 1     : repair unavailable; proceeding with best available script
+
+[STAGE 5] Blender Execution and Export
+----------------------------------------------------
+Blender status    : failed
+Error type        : EmptyExport
+Message           : GLB is empty or missing (3692 bytes). Script ran without errors and gltf export was called, but the file is too small to contain geometry. Ensure bpy.data.objects.new() objects are linked to the collection (bpy.context.collection.objects.link(obj)) and that no bpy.ops.object.delete() is called after building geometry.
+
+[REPAIR 1/5]
+Error type        : EmptyExport
+Message           : GLB is empty or missing (3692 bytes). Script ran without errors and gltf export was called, but the file is too small to contain geometry. Ensure bpy.data.objects.new() objects are linked to the collection (bpy.context.collection.objects.link(obj)) and that no bpy.ops.object.delete() is called after building geometry.
+2026-09-10 08:18:35,198 | WARNING | [REPAIR] Empty patch
+Repair patch      : empty
+
+[REPAIR 2/5]
+Error type        : UnknownError
+Message           : GLB is empty or missing (3692 bytes). Script ran without errors and gltf export was called, but the file is too small to contain geometry. Ensure bpy.data.objects.new() objects are linked to the collection (bpy.context.collection.objects.link(obj)) and that no bpy.ops.object.delete() is called after building geometry.
+2026-09-10 08:18:42,351 | WARNING | [REPAIR] Empty patch
+Repair patch      : empty
+
+[REPAIR 3/5]
+Error type        : UnknownError
+Message           : GLB is empty or missing (3692 bytes). Script ran without errors and gltf export was called, but the file is too small to contain geometry. Ensure bpy.data.objects.new() objects are linked to the collection (bpy.context.collection.objects.link(obj)) and that no bpy.ops.object.delete() is called after building geometry.
+2026-09-10 08:18:42,351 | WARNING | [REPAIR] Duplicate repair failure; refusing to replay broken script
+2026-09-10 08:18:42,351 | WARNING | [REPAIR] Empty patch
+Repair patch      : empty
+
+[REPAIR 4/5]
+Error type        : UnknownError
+Message           : GLB is empty or missing (3692 bytes). Script ran without errors and gltf export was called, but the file is too small to contain geometry. Ensure bpy.data.objects.new() objects are linked to the collection (bpy.context.collection.objects.link(obj)) and that no bpy.ops.object.delete() is called after building geometry.
+2026-09-10 08:18:42,351 | WARNING | [REPAIR] Duplicate repair failure; refusing to replay broken script
+2026-09-10 08:18:42,351 | WARNING | [REPAIR] Empty patch
+Repair patch      : empty
+
+[REPAIR 5/5]
+Error type        : UnknownError
+Message           : GLB is empty or missing (3692 bytes). Script ran without errors and gltf export was called, but the file is too small to contain geometry. Ensure bpy.data.objects.new() objects are linked to the collection (bpy.context.collection.objects.link(obj)) and that no bpy.ops.object.delete() is called after building geometry.
+2026-09-10 08:18:42,351 | WARNING | [REPAIR] Duplicate repair failure; refusing to replay broken script
+2026-09-10 08:18:42,351 | WARNING | [REPAIR] Empty patch
+Repair patch      : empty
+Repair status     : failed

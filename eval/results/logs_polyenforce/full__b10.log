@@ -1,0 +1,228 @@
+
+[KEY POOL STATUS]
+{'google': [{'name': 'GOOGLE_API_KEY', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_2', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_3', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_4', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_5', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_6', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}], 'openrouter': [{'name': 'OPENROUTER_API_KEY', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'OPENROUTER_API_KEY_2', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}]}
+
+[STAGE 1] Planning and Structural Analysis
+----------------------------------------------------
+2026-09-10 08:10:53,667 | ERROR | [KEY_POOL] GOOGLE_API_KEY exhausted
+2026-09-10 08:10:54,714 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+2026-09-10 08:10:55,799 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:10:59,159 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:10:59,586 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:10:59,792 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:11:00,294 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+2026-09-10 08:11:00,614 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+2026-09-10 08:11:00,681 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+Category          : Park Bench
+Geometry          : hard_surface
+Blueprint         : park_bench (318 loaded)
+Style             : outdoor slatted park bench
+Material          : wood and cast metal
+Scale             : 1.8 m
+Poly budget       : medium
+Export            : glb
+Parts:
+  - body
+  - detail
+  - seat surface
+  - support legs or pedestal
+  - backrest if applicable
+  - side supports or arms
+  - feet or glides
+  - slatted seat
+  - ... 2 more
+Structure         : Park Bench blueprint 'park_bench' matched from the structure library. Build it as a recognizable outdoor slatted park bench with its required support and signature parts.
+Primary forms:
+  - main body volume
+  - secondary details
+  - horizontal sitting surface
+  - vertical supports below
+  - rear back support volume
+  - ... 1 more
+Assembly order:
+  - build grounded main body
+  - attach secondary details
+  - build load-bearing legs or pedestal
+  - attach seat above supports
+  - attach backrest to rear edge
+  - add arms and details
+Attachments:
+  - visible joints connecting all major pieces
+  - legs touch underside of seat
+  - backrest overlaps rear seat frame
+  - arms connect to seat or back
+Orientation:
+  - Z is up
+  - circular mechanical parts follow their real-world axis
+  - seat is horizontal
+  - supports reach the ground
+  - backrest sits behind the seat
+Support           : Keep the seat over a stable leg, sled, or pedestal footprint.
+Texture plan:
+  - metal material
+  - subtle roughness and edge wear
+  - wood, plastic, fabric, or metal material split by part
+  - edge wear on contact points
+Shape plan:
+  - beveled hard-surface edges
+  - rounded or tapered forms where the object is not naturally box-shaped
+  - surface details that break up large plain faces
+  - round or bevel seat edges
+  - avoid raw cube legs
+  - add seams, screws, or caps
+  - ... 3 more
+Constraints:
+  - no floating parts
+  - no flat wheels unless explicitly horizontal
+  - seat must not float
+  - all legs/supports must touch ground
+  - backrest must attach to seat if present
+  - must read clearly as park bench, not a generic primitive or unrelated object
+  - ... 3 more
+[GRAPH_PARTS]["body", "detail", "seat surface", "support legs or pedestal", "backrest if applicable", "side supports or arms", "feet or glides", "slatted seat", "slatted back", "metal side frames"]
+
+[STAGE 2] Asset Naming
+----------------------------------------------------
+Asset name        : rustic_park_bench
+Project folder    : rustic_park_bench(3)
+
+[VISION] Generating reference image in background (Gemini > Pollinations FLUX)...
+
+[STAGE 3] Blender Script Generation
+----------------------------------------------------
+Generation        : LLM codegen (no usable build spec)
+[VISION] Reference image saved -> reference.jpg (69KB)
+2026-09-10 08:11:15,192 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:11:16,470 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:11:17,715 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:11:17,715 | WARNING | [SCRIPT_GEN] Vision-guided generation failed, falling back to text-only
+Script saved      : C:\Users\darpa\Desktop\ARGUS\eval\out\full\runs\rustic_park_bench(3)\scripts\rustic_park_bench.py
+
+[STAGE 4] Critic Review
+----------------------------------------------------
+Repair required   : yes
+Summary           : Generated script does not satisfy structure blueprint 'park_bench'.
+Issues:
+  - Too few named mesh/detail objects for a blueprint asset (2 object creations found).
+  - Too few distinct materials for a detailed hard-surface asset (1 material creation found).
+Critic pass 1     : issuing repair patch
+Critic pass 1     : patch applied â†’ re-reviewing
+Repair required   : yes
+Summary           : Generated script does not satisfy structure blueprint 'park_bench'.
+Issues:
+  - Too few named mesh/detail objects for a blueprint asset (2 object creations found).
+  - Too few distinct materials for a detailed hard-surface asset (1 material creation found).
+Critic pass 2     : issuing repair patch
+Critic pass 2     : patch applied â†’ re-reviewing
+
+[STAGE 5] Blender Execution and Export
+----------------------------------------------------
+Poly budget       : 5,952 -> 4,988 tris (budget 5,000, 1.19x)
+Blender status    : export complete
+GLB               : C:\Users\darpa\Desktop\ARGUS\eval\out\full\final\rustic_park_bench(3)\rustic_park_bench.glb
+FBX               : C:\Users\darpa\Desktop\ARGUS\eval\out\full\final\rustic_park_bench(3)\rustic_park_bench.fbx
+BLEND             : C:\Users\darpa\Desktop\ARGUS\eval\out\full\final\rustic_park_bench(3)\rustic_park_bench.blend
+[PREVIEW IMAGE]
+C:\Users\darpa\Desktop\ARGUS\eval\out\full\final\rustic_park_bench(3)\rustic_park_bench_preview.png
+Reference image   : C:\Users\darpa\Desktop\ARGUS\eval\out\full\final\rustic_park_bench(3)\reference.jpg
+
+[STAGE 54] Best-of-3 Candidate Generation
+----------------------------------------------------
+2026-09-10 08:11:37,906 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:11:39,281 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:11:43,471 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:11:44,839 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:11:47,354 | WARNING | [VISUAL_QA] All vision models failed â€” skipping visual score
+Candidate 1/3: score -1/10
+
+[BEST-OF-N 2/3] generating fresh candidate
+2026-09-10 08:11:51,956 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:11:53,280 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:11:54,555 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:11:54,555 | WARNING | [SCRIPT_GEN] Vision-guided generation failed, falling back to text-only
+Poly budget       : 5,952 -> 4,988 tris (budget 5,000, 1.19x)
+2026-09-10 08:12:14,406 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+2026-09-10 08:12:15,749 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:12:19,337 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:12:20,677 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:12:23,369 | WARNING | [VISUAL_QA] All vision models failed â€” skipping visual score
+Candidate 2/3: score -1/10
+
+[BEST-OF-N 3/3] generating fresh candidate
+2026-09-10 08:12:28,183 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:12:29,282 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:12:30,395 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:12:30,395 | WARNING | [SCRIPT_GEN] Vision-guided generation failed, falling back to text-only
+Poly budget       : 5,952 -> 4,988 tris (budget 5,000, 1.19x)
+2026-09-10 08:12:50,823 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:12:52,253 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:12:56,080 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:12:57,332 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:13:00,093 | WARNING | [VISUAL_QA] All vision models failed â€” skipping visual score
+Candidate 3/3: score -1/10
+
+Best-of-N final   : -1/10 (from 3 candidates)
+
+[STAGE 55] Visual Feedback Loop
+----------------------------------------------------
+2026-09-10 08:13:07,656 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:13:09,028 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:13:13,297 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+2026-09-10 08:13:14,539 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:13:17,083 | WARNING | [VISUAL_QA] All vision models failed â€” skipping visual score
+Visual loop       : skipped (no vision model / render unavailable)
+
+[STAGE 56] Full Regen Attempt 1/3 (score -1 < target 8)
+----------------------------------------------------
+Full regen        : no script produced; stopping outer loop
+
+[STAGE 6] Runtime Topology Validation
+----------------------------------------------------
+Topology source   : inline (measured during the build â€” no extra Blender pass)
+Success           : True
+Severity          : clean
+Meshes            : 28
+Tri faces         : 4988
+Quad faces        : 0
+N-gons            : 0
+Open edges        : 0
+Manifold errors   : 0
+Components        : 1
+Floating parts    : 22
+Grounded          : True
+Topology status   : clean
+
+[STAGE 7] Export Quality Summary
+----------------------------------------------------
+Success           : True
+GLB               : 257392 bytes
+FBX               : 327660 bytes
+BLEND             : 205039 bytes
+
+[STAGE 75] Visual Quality Assessment
+----------------------------------------------------
+Visual QA         : skipped (no vision model / render available)
+
+[STAGE 77] Diffusion Texture Paint
+----------------------------------------------------
+2026-09-10 08:13:38,871 | WARNING | [CF_EDIT] error 403: {"errors":[{"message":"AiError: Ai: This account is not allowed to access @cf/runwayml/stable-diffusion-v1-5-img2img. (f4fb21ee-f4a9-4081-a25e-1d6bb1630a5e)","c
+2026-09-10 08:13:40,362 | WARNING | [NIM_EDIT] error 422: {"detail":"Expected: example_id, got: base64"}
+2026-09-10 08:13:41,427 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:13:42,758 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+2026-09-10 08:13:44,314 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:13:45,745 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:13:47,141 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:13:47,141 | WARNING | [GEMINI_EDIT] no image-edit model available
+2026-09-10 08:13:47,141 | WARNING | [PAINT] view 0 repaint unavailable â€” skipping paint
+Texture paint     : skipped
+
+[STAGE 8] Structure Memory Approval
+----------------------------------------------------
+Memory status     : skipped
+Reason            : local structural critique still requires repair
+Reference   : reference.jpg
+
+[ARGUS COMPLETE]
+Final Asset : C:\Users\darpa\Desktop\ARGUS\eval\out\full\final\rustic_park_bench(3)\rustic_park_bench.glb
+Preview     : C:\Users\darpa\Desktop\ARGUS\eval\out\full\final\rustic_park_bench(3)\rustic_park_bench_preview.png
+Project     : rustic_park_bench(3)

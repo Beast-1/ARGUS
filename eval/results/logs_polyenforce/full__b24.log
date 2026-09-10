@@ -1,0 +1,151 @@
+
+[KEY POOL STATUS]
+{'google': [{'name': 'GOOGLE_API_KEY', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_2', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_3', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_4', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_5', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_6', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}], 'openrouter': [{'name': 'OPENROUTER_API_KEY', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'OPENROUTER_API_KEY_2', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}]}
+
+[STAGE 1] Planning and Structural Analysis
+----------------------------------------------------
+2026-09-10 08:18:02,861 | ERROR | [KEY_POOL] GOOGLE_API_KEY exhausted
+2026-09-10 08:18:03,991 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+2026-09-10 08:18:04,786 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:18:07,190 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:18:07,305 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:18:07,316 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:18:07,316 | WARNING | [KEY_POOL] Waiting 0.7s for cooldown
+2026-09-10 08:18:08,142 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:18:08,308 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:18:09,265 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+Category          : Water Pump
+Geometry          : hard_surface
+Blueprint         : water_pump (318 loaded)
+Style             : industrial pump
+Material          : painted metal
+Scale             : 1.0 m
+Poly budget       : medium
+Export            : glb
+Parts:
+  - body
+  - detail
+  - main housing
+  - pipes/shafts
+  - flanges/brackets
+  - bolts
+  - base plate
+  - control/detail panels
+  - ... 5 more
+Structure         : Water Pump blueprint 'water_pump' matched from the structure library. Build it as a recognizable industrial pump with its required support and signature parts.
+Primary forms:
+  - main body volume
+  - secondary details
+  - heavy machine body
+  - cylindrical pipes/shafts
+  - flat mounting plates
+  - ... 1 more
+Assembly order:
+  - build grounded main body
+  - attach secondary details
+  - build base plate
+  - mount main housing
+  - attach pipes/shafts/flanges
+  - add bolts and panels
+Attachments:
+  - visible joints connecting all major pieces
+  - flanges overlap pipe ends
+  - bolts sit on plates
+  - housing bolts to base
+Orientation:
+  - Z is up
+  - circular mechanical parts follow their real-world axis
+  - base is grounded
+  - pipes follow real axes
+  - controls face outward
+Support           : Base plate and brackets carry the heavy industrial body.
+Texture plan:
+  - metal material
+  - subtle roughness and edge wear
+  - painted metal
+  - brushed/chrome shafts
+  - rubber gaskets
+  - edge grime/wear
+Shape plan:
+  - beveled hard-surface edges
+  - rounded or tapered forms where the object is not naturally box-shaped
+  - surface details that break up large plain faces
+  - bevel housings
+  - use cylinders for pipes
+  - add flanges, bolts, ribs, and panels
+  - ... 3 more
+Constraints:
+  - no floating parts
+  - no flat wheels unless explicitly horizontal
+  - pipes/shafts must connect to housing
+  - base must support body
+  - flanges and bolts must be visible
+  - must read clearly as water pump, not a generic primitive or unrelated object
+  - ... 3 more
+[GRAPH_PARTS]["body", "detail", "main housing", "pipes/shafts", "flanges/brackets", "bolts", "base plate", "control/detail panels", "volute housing", "motor", "inlet flange", "outlet flange", "base"]
+
+[STAGE 2] Asset Naming
+----------------------------------------------------
+Asset name        : vintage_gas_pump
+Project folder    : vintage_gas_pump(5)
+
+[VISION] Generating reference image in background (Gemini > Pollinations FLUX)...
+
+[STAGE 3] Blender Script Generation
+----------------------------------------------------
+Generation        : LLM codegen (no usable build spec)
+[VISION] Reference image saved -> reference.jpg (88KB)
+2026-09-10 08:18:26,867 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:18:27,949 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:18:29,267 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:18:29,276 | WARNING | [SCRIPT_GEN] Vision-guided generation failed, falling back to text-only
+Script saved      : C:\Users\darpa\Desktop\ARGUS\eval\out\full\runs\vintage_gas_pump(5)\scripts\vintage_gas_pump.py
+
+[STAGE 4] Critic Review
+----------------------------------------------------
+Repair required   : yes
+Summary           : Script too minimal: only 2 apparent mesh object(s) (need at least 3 â€” use create_cone/create_cylinder helpers or direct bpy.data.objects.new() calls for each named part)
+Issues:
+  - Script too minimal: only 2 apparent mesh object(s) (need at least 3 â€” use create_cone/create_cylinder helpers or direct bpy.data.objects.new() calls for each named part)
+Critic pass 1     : issuing repair patch
+Critic pass 1     : repair unavailable; proceeding with best available script
+
+[STAGE 5] Blender Execution and Export
+----------------------------------------------------
+Blender status    : failed
+Error type        : EmptyExport
+Message           : GLB is empty or missing (3692 bytes). Script ran without errors and gltf export was called, but the file is too small to contain geometry. Ensure bpy.data.objects.new() objects are linked to the collection (bpy.context.collection.objects.link(obj)) and that no bpy.ops.object.delete() is called after building geometry.
+
+[REPAIR 1/5]
+Error type        : EmptyExport
+Message           : GLB is empty or missing (3692 bytes). Script ran without errors and gltf export was called, but the file is too small to contain geometry. Ensure bpy.data.objects.new() objects are linked to the collection (bpy.context.collection.objects.link(obj)) and that no bpy.ops.object.delete() is called after building geometry.
+2026-09-10 08:18:58,404 | WARNING | [REPAIR] Empty patch
+Repair patch      : empty
+
+[REPAIR 2/5]
+Error type        : UnknownError
+Message           : GLB is empty or missing (3692 bytes). Script ran without errors and gltf export was called, but the file is too small to contain geometry. Ensure bpy.data.objects.new() objects are linked to the collection (bpy.context.collection.objects.link(obj)) and that no bpy.ops.object.delete() is called after building geometry.
+2026-09-10 08:19:05,904 | WARNING | [REPAIR] Empty patch
+Repair patch      : empty
+
+[REPAIR 3/5]
+Error type        : UnknownError
+Message           : GLB is empty or missing (3692 bytes). Script ran without errors and gltf export was called, but the file is too small to contain geometry. Ensure bpy.data.objects.new() objects are linked to the collection (bpy.context.collection.objects.link(obj)) and that no bpy.ops.object.delete() is called after building geometry.
+2026-09-10 08:19:05,904 | WARNING | [REPAIR] Duplicate repair failure; refusing to replay broken script
+2026-09-10 08:19:05,904 | WARNING | [REPAIR] Empty patch
+Repair patch      : empty
+
+[REPAIR 4/5]
+Error type        : UnknownError
+Message           : GLB is empty or missing (3692 bytes). Script ran without errors and gltf export was called, but the file is too small to contain geometry. Ensure bpy.data.objects.new() objects are linked to the collection (bpy.context.collection.objects.link(obj)) and that no bpy.ops.object.delete() is called after building geometry.
+2026-09-10 08:19:05,904 | WARNING | [REPAIR] Duplicate repair failure; refusing to replay broken script
+2026-09-10 08:19:05,904 | WARNING | [REPAIR] Empty patch
+Repair patch      : empty
+
+[REPAIR 5/5]
+Error type        : UnknownError
+Message           : GLB is empty or missing (3692 bytes). Script ran without errors and gltf export was called, but the file is too small to contain geometry. Ensure bpy.data.objects.new() objects are linked to the collection (bpy.context.collection.objects.link(obj)) and that no bpy.ops.object.delete() is called after building geometry.
+2026-09-10 08:19:05,904 | WARNING | [REPAIR] Duplicate repair failure; refusing to replay broken script
+2026-09-10 08:19:05,904 | WARNING | [REPAIR] Empty patch
+Repair patch      : empty
+Repair status     : failed

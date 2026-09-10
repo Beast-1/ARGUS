@@ -1,0 +1,120 @@
+
+[KEY POOL STATUS]
+{'google': [{'name': 'GOOGLE_API_KEY', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_2', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_3', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_4', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_5', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_6', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}], 'openrouter': [{'name': 'OPENROUTER_API_KEY', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'OPENROUTER_API_KEY_2', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}]}
+
+[STAGE 1] Planning and Structural Analysis
+----------------------------------------------------
+2026-09-10 08:09:51,302 | ERROR | [KEY_POOL] GOOGLE_API_KEY exhausted
+2026-09-10 08:09:52,406 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+2026-09-10 08:09:53,174 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:09:57,128 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:09:57,507 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:09:57,624 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:09:58,319 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:09:58,399 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+2026-09-10 08:09:58,698 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+Category          : object
+Geometry          : hard_surface
+Style             : generic
+Material          : metal
+Scale             : 1.0 m
+Poly budget       : medium
+Export            : glb
+Parts:
+  - body
+  - detail
+Structure         : A stable hard-surface object with connected parts.
+Primary forms:
+  - main body volume
+  - secondary details
+Assembly order:
+  - build grounded main body
+  - attach secondary details
+Attachments:
+  - visible joints connecting all major pieces
+Orientation:
+  - Z is up
+  - circular mechanical parts follow their real-world axis
+Support           : Ground the asset on a stable base or support footprint.
+Texture plan:
+  - metal material
+  - subtle roughness and edge wear
+Shape plan:
+  - beveled hard-surface edges
+  - rounded or tapered forms where the object is not naturally box-shaped
+  - surface details that break up large plain faces
+  - use part-appropriate geometry instead of one generic cube helper for every visible part
+  - keep meaningful visible parts as separate semantically named mesh objects
+  - use clean object and material names without ARGUS_ prefixes except ARGUS_ROOT
+Constraints:
+  - no floating parts
+  - no flat wheels unless explicitly horizontal
+  - visible mesh objects and materials should use clean semantic names, not ARGUS_ debug-style prefixes
+  - soft, round, wheeled, tubular, and shell-like parts must not be implemented as plain scaled cubes
+[GRAPH_PARTS]["body", "detail"]
+
+[STAGE 2] Asset Naming
+----------------------------------------------------
+Asset name        : concrete_cinder_block
+Project folder    : concrete_cinder_block(3)
+
+[VISION] Generating reference image in background (Gemini > Pollinations FLUX)...
+
+[STAGE 3] Blender Script Generation
+----------------------------------------------------
+Generation        : LLM codegen (no usable build spec)
+[VISION] Reference image saved -> reference.jpg (53KB)
+2026-09-10 08:10:13,632 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:10:14,680 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:10:15,842 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:10:15,854 | WARNING | [SCRIPT_GEN] Vision-guided generation failed, falling back to text-only
+Script saved      : C:\Users\darpa\Desktop\ARGUS\eval\out\full\runs\concrete_cinder_block(3)\scripts\concrete_cinder_block.py
+
+[STAGE 4] Critic Review
+----------------------------------------------------
+Repair required   : yes
+Summary           : Script too minimal: only 2 apparent mesh object(s) (need at least 3 â€” use create_cone/create_cylinder helpers or direct bpy.data.objects.new() calls for each named part)
+Issues:
+  - Script too minimal: only 2 apparent mesh object(s) (need at least 3 â€” use create_cone/create_cylinder helpers or direct bpy.data.objects.new() calls for each named part)
+Critic pass 1     : issuing repair patch
+Critic pass 1     : repair unavailable; proceeding with best available script
+
+[STAGE 5] Blender Execution and Export
+----------------------------------------------------
+Blender status    : failed
+Error type        : EmptyExport
+Message           : GLB is empty or missing (3692 bytes). Script ran without errors and gltf export was called, but the file is too small to contain geometry. Ensure bpy.data.objects.new() objects are linked to the collection (bpy.context.collection.objects.link(obj)) and that no bpy.ops.object.delete() is called after building geometry.
+
+[REPAIR 1/5]
+Error type        : EmptyExport
+Message           : GLB is empty or missing (3692 bytes). Script ran without errors and gltf export was called, but the file is too small to contain geometry. Ensure bpy.data.objects.new() objects are linked to the collection (bpy.context.collection.objects.link(obj)) and that no bpy.ops.object.delete() is called after building geometry.
+2026-09-10 08:10:45,535 | WARNING | [REPAIR] Empty patch
+Repair patch      : empty
+
+[REPAIR 2/5]
+Error type        : UnknownError
+Message           : GLB is empty or missing (3692 bytes). Script ran without errors and gltf export was called, but the file is too small to contain geometry. Ensure bpy.data.objects.new() objects are linked to the collection (bpy.context.collection.objects.link(obj)) and that no bpy.ops.object.delete() is called after building geometry.
+2026-09-10 08:10:52,889 | WARNING | [REPAIR] Empty patch
+Repair patch      : empty
+
+[REPAIR 3/5]
+Error type        : UnknownError
+Message           : GLB is empty or missing (3692 bytes). Script ran without errors and gltf export was called, but the file is too small to contain geometry. Ensure bpy.data.objects.new() objects are linked to the collection (bpy.context.collection.objects.link(obj)) and that no bpy.ops.object.delete() is called after building geometry.
+2026-09-10 08:10:52,889 | WARNING | [REPAIR] Duplicate repair failure; refusing to replay broken script
+2026-09-10 08:10:52,889 | WARNING | [REPAIR] Empty patch
+Repair patch      : empty
+
+[REPAIR 4/5]
+Error type        : UnknownError
+Message           : GLB is empty or missing (3692 bytes). Script ran without errors and gltf export was called, but the file is too small to contain geometry. Ensure bpy.data.objects.new() objects are linked to the collection (bpy.context.collection.objects.link(obj)) and that no bpy.ops.object.delete() is called after building geometry.
+2026-09-10 08:10:52,889 | WARNING | [REPAIR] Duplicate repair failure; refusing to replay broken script
+2026-09-10 08:10:52,889 | WARNING | [REPAIR] Empty patch
+Repair patch      : empty
+
+[REPAIR 5/5]
+Error type        : UnknownError
+Message           : GLB is empty or missing (3692 bytes). Script ran without errors and gltf export was called, but the file is too small to contain geometry. Ensure bpy.data.objects.new() objects are linked to the collection (bpy.context.collection.objects.link(obj)) and that no bpy.ops.object.delete() is called after building geometry.
+2026-09-10 08:10:52,889 | WARNING | [REPAIR] Duplicate repair failure; refusing to replay broken script
+2026-09-10 08:10:52,889 | WARNING | [REPAIR] Empty patch
+Repair patch      : empty
+Repair status     : failed

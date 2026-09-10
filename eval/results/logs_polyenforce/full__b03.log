@@ -1,0 +1,239 @@
+
+[KEY POOL STATUS]
+{'google': [{'name': 'GOOGLE_API_KEY', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_2', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_3', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_4', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_5', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'GOOGLE_API_KEY_6', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}], 'openrouter': [{'name': 'OPENROUTER_API_KEY', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}, {'name': 'OPENROUTER_API_KEY_2', 'requests': 0, 'exhausted': False, 'cooling_for_sec': 0.0}]}
+
+[STAGE 1] Planning and Structural Analysis
+----------------------------------------------------
+2026-09-10 08:07:01,599 | ERROR | [KEY_POOL] GOOGLE_API_KEY exhausted
+2026-09-10 08:07:02,681 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+2026-09-10 08:07:03,826 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:07:05,910 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:07:06,021 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:07:06,340 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:07:06,340 | WARNING | [KEY_POOL] Waiting 0.3s for cooldown
+2026-09-10 08:07:06,830 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:07:07,021 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:07:08,208 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+Category          : Traffic Cone
+Geometry          : hard_surface
+Blueprint         : traffic_cone (318 loaded)
+Memory            : 1 strict success run(s)
+Style             : road safety cone
+Material          : orange plastic
+Scale             : 1.0 m
+Poly budget       : medium
+Export            : glb
+Parts:
+  - body
+  - detail
+  - main body
+  - support/base
+  - functional details
+  - edge trim
+  - surface markings
+  - tapered cone
+  - ... 8 more
+Structure         : Traffic Cone blueprint 'traffic_cone' matched from the structure library. Build it as a recognizable road safety cone with its required support and signature parts.
+Primary forms:
+  - main body volume
+  - secondary details
+  - recognizable main volume
+  - supporting base
+  - small functional details
+  - ... 4 more
+Assembly order:
+  - build grounded main body
+  - attach secondary details
+  - build main body
+  - attach support/base
+  - add functional details
+  - add trim and surface marks
+  - ... 6 more
+Attachments:
+  - visible joints connecting all major pieces
+  - details connect to main body
+  - base supports object
+  - trim follows edges
+  - base_plate chamfered edge (lathe) welded to base perimeter
+  - cone_body_lower lathe fused to base_plate top
+  - ... 3 more
+Orientation:
+  - Z is up
+  - circular mechanical parts follow their real-world axis
+  - object sits in a plausible usable pose
+  - support is below load
+  - front/functional side is readable
+  - Z axis is vertical (cone points up)
+  - ... 2 more
+Support           : Visible support or base keeps the object stable.
+Texture plan:
+  - metal material
+  - subtle roughness and edge wear
+  - material contrast by part
+  - roughness and subtle wear
+  - Base plate: slightly rough, matte black plastic, subtle wear on corners
+  - Cone body: bright orange plastic, medium roughness, possible scuffs and dirt near base
+  - ... 1 more
+Shape plan:
+  - beveled hard-surface edges
+  - rounded or tapered forms where the object is not naturally box-shaped
+  - surface details that break up large plain faces
+  - bevel or round main silhouette
+  - add recognizable details and seams
+  - Base plate: sharp edges with 0.012m bevel for realism
+  - ... 6 more
+Constraints:
+  - no floating parts
+  - no flat wheels unless explicitly horizontal
+  - must not be a generic primitive
+  - details must attach
+  - object must be grounded or mounted
+  - must read clearly as traffic cone, not a generic primitive or unrelated object
+  - ... 9 more
+[GRAPH_PARTS]["body", "detail", "main body", "support/base", "functional details", "edge trim", "surface markings", "tapered cone", "wide square base", "reflective bands", "base_plate", "base_plate_chamfer", "cone_body_lower", "cone_body_mid", "cone_body_upper", "cone_top_rim"]
+
+[STAGE 2] Asset Naming
+----------------------------------------------------
+Asset name        : traffic_cone
+Project folder    : traffic_cone(3)
+
+[VISION] Generating reference image in background (Gemini > Pollinations FLUX)...
+
+[STAGE 3] Blender Script Generation
+----------------------------------------------------
+Generation        : LLM codegen (no usable build spec)
+[VISION] Reference image saved -> reference.jpg (44KB)
+2026-09-10 08:07:22,833 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:07:23,816 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:07:25,005 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:07:25,007 | WARNING | [SCRIPT_GEN] Vision-guided generation failed, falling back to text-only
+Script saved      : C:\Users\darpa\Desktop\ARGUS\eval\out\full\runs\traffic_cone(3)\scripts\traffic_cone.py
+
+[STAGE 4] Critic Review
+----------------------------------------------------
+Repair required   : yes
+Summary           : Generated script does not satisfy structure blueprint 'traffic_cone'.
+Issues:
+  - Too few distinct materials for a detailed hard-surface asset (1 material creation found).
+  - Insufficient visible hard-surface detail: add bolts, seams, panels, brackets, vents, handles, feet, or similar attached parts.
+Critic pass 1     : issuing repair patch
+Critic pass 1     : patch applied â†’ re-reviewing
+Repair required   : yes
+Summary           : Generated script does not satisfy structure blueprint 'traffic_cone'.
+Issues:
+  - Too few distinct materials for a detailed hard-surface asset (1 material creation found).
+  - Insufficient visible hard-surface detail: add bolts, seams, panels, brackets, vents, handles, feet, or similar attached parts.
+Critic pass 2     : issuing repair patch
+Critic pass 2     : patch applied â†’ re-reviewing
+
+[STAGE 5] Blender Execution and Export
+----------------------------------------------------
+Poly budget       : 2,472 tris (within budget, untouched)
+Blender status    : export complete
+GLB               : C:\Users\darpa\Desktop\ARGUS\eval\out\full\final\traffic_cone(3)\traffic_cone.glb
+FBX               : C:\Users\darpa\Desktop\ARGUS\eval\out\full\final\traffic_cone(3)\traffic_cone.fbx
+BLEND             : C:\Users\darpa\Desktop\ARGUS\eval\out\full\final\traffic_cone(3)\traffic_cone.blend
+[PREVIEW IMAGE]
+C:\Users\darpa\Desktop\ARGUS\eval\out\full\final\traffic_cone(3)\traffic_cone_preview.png
+Reference image   : C:\Users\darpa\Desktop\ARGUS\eval\out\full\final\traffic_cone(3)\reference.jpg
+
+[STAGE 54] Best-of-3 Candidate Generation
+----------------------------------------------------
+2026-09-10 08:07:44,739 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:07:46,241 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:07:50,393 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:07:51,837 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:07:54,390 | WARNING | [VISUAL_QA] All vision models failed â€” skipping visual score
+Candidate 1/3: score -1/10
+
+[BEST-OF-N 2/3] generating fresh candidate
+2026-09-10 08:07:59,233 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:08:00,314 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:08:01,537 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:08:01,538 | WARNING | [SCRIPT_GEN] Vision-guided generation failed, falling back to text-only
+Poly budget       : 2,472 tris (within budget, untouched)
+2026-09-10 08:08:21,592 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+2026-09-10 08:08:22,919 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:08:27,030 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:08:28,412 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:08:31,060 | WARNING | [VISUAL_QA] All vision models failed â€” skipping visual score
+Candidate 2/3: score -1/10
+
+[BEST-OF-N 3/3] generating fresh candidate
+2026-09-10 08:08:36,010 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+2026-09-10 08:08:36,879 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:08:37,938 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:08:37,938 | WARNING | [SCRIPT_GEN] Vision-guided generation failed, falling back to text-only
+Poly budget       : 2,472 tris (within budget, untouched)
+2026-09-10 08:08:56,753 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+2026-09-10 08:08:58,246 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:09:02,511 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:09:04,009 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:09:06,789 | WARNING | [VISUAL_QA] All vision models failed â€” skipping visual score
+Candidate 3/3: score -1/10
+
+Best-of-N final   : -1/10 (from 3 candidates)
+
+[STAGE 55] Visual Feedback Loop
+----------------------------------------------------
+2026-09-10 08:09:13,020 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:09:14,446 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:09:18,473 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:09:20,002 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:09:22,726 | WARNING | [VISUAL_QA] All vision models failed â€” skipping visual score
+Visual loop       : skipped (no vision model / render unavailable)
+
+[STAGE 56] Full Regen Attempt 1/3 (score -1 < target 8)
+----------------------------------------------------
+Full regen        : no script produced; stopping outer loop
+
+[STAGE 6] Runtime Topology Validation
+----------------------------------------------------
+Topology source   : inline (measured during the build â€” no extra Blender pass)
+Success           : True
+Severity          : clean
+Meshes            : 14
+Tri faces         : 2472
+Quad faces        : 0
+N-gons            : 0
+Open edges        : 0
+Manifold errors   : 0
+Components        : 1
+Floating parts    : 9
+Grounded          : True
+Topology status   : clean
+
+[STAGE 7] Export Quality Summary
+----------------------------------------------------
+Success           : True
+GLB               : 163256 bytes
+FBX               : 166764 bytes
+BLEND             : 160630 bytes
+
+[STAGE 75] Visual Quality Assessment
+----------------------------------------------------
+Visual QA         : skipped (no vision model / render available)
+
+[STAGE 77] Diffusion Texture Paint
+----------------------------------------------------
+2026-09-10 08:09:41,763 | WARNING | [CF_EDIT] error 403: {"errors":[{"message":"AiError: Ai: This account is not allowed to access @cf/runwayml/stable-diffusion-v1-5-img2img. (2596073a-0f1c-42f3-a0df-cafa34cba20e)","c
+2026-09-10 08:09:43,203 | WARNING | [NIM_EDIT] error 422: {"detail":"Expected: example_id, got: base64"}
+2026-09-10 08:09:44,620 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s
+2026-09-10 08:09:45,902 | WARNING | [KEY_POOL] GOOGLE_API_KEY_3 cooling 4s
+2026-09-10 08:09:47,281 | WARNING | [KEY_POOL] GOOGLE_API_KEY_4 cooling 4s
+2026-09-10 08:09:48,659 | WARNING | [KEY_POOL] GOOGLE_API_KEY_5 cooling 4s
+2026-09-10 08:09:50,094 | WARNING | [KEY_POOL] GOOGLE_API_KEY_6 cooling 4s
+2026-09-10 08:09:50,094 | WARNING | [GEMINI_EDIT] no image-edit model available
+2026-09-10 08:09:50,094 | WARNING | [PAINT] view 0 repaint unavailable â€” skipping paint
+Texture paint     : skipped
+
+[STAGE 8] Structure Memory Approval
+----------------------------------------------------
+Memory status     : skipped
+Reason            : local structural critique still requires repair
+Reference   : reference.jpg
+
+[ARGUS COMPLETE]
+Final Asset : C:\Users\darpa\Desktop\ARGUS\eval\out\full\final\traffic_cone(3)\traffic_cone.glb
+Preview     : C:\Users\darpa\Desktop\ARGUS\eval\out\full\final\traffic_cone(3)\traffic_cone_preview.png
+Project     : traffic_cone(3)

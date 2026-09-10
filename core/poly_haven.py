@@ -141,39 +141,6 @@ def _fetch_all_textures() -> list[dict]:
         return []
 
 
-def build_catalog_block(material_hints: list[str]) -> str:
-    """
-    Returns a formatted string block listing available Poly Haven textures
-    suitable for embedding in the planner's prompt.
-    """
-    # Without a recognised category the assets endpoint just returns the
-    # first 60 textures alphabetically (aerial/asphalt/brick/concrete…) — an
-    # actively misleading list that tempts the planner into off-topic picks
-    # (observed: concrete_floor_01 chosen for "glazed ceramic"). Offer no
-    # catalog instead; un-textured materials use the procedural builder.
-    if not _extract_categories(material_hints):
-        return ""
-    catalog = fetch_texture_catalog(material_hints)
-    if not catalog:
-        return ""
-
-    lines = ["POLY HAVEN TEXTURE CATALOG (CC0, free for any use):"]
-    lines.append("slug | name | categories")
-    for e in catalog:
-        cats = ", ".join(e["categories"])
-        lines.append(f"  {e['slug']} | {e['name']} | [{cats}]")
-
-    lines.append(
-        "\nFor each distinct material in the asset, add a "
-        '"poly_haven_textures" key to your JSON output mapping a short '
-        "descriptive material name to the best matching slug from this list. "
-        "Use {} if nothing matches well.\n"
-        'Example: "poly_haven_textures": {"body_metal": "metal_plate_wall_001", '
-        '"rubber_tires": "worn_rubber_01"}'
-    )
-    return "\n".join(lines)
-
-
 def _fetch_slug_files(slug: str) -> dict:
     """Return the full files-API response dict for a slug, or {} on failure."""
     try:
