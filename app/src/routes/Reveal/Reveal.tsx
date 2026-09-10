@@ -1,5 +1,7 @@
 import { useState } from "react";
+import type { LucideIcon } from "lucide-react";
 import { apiFileUrl } from "../../api/client";
+import { ModelViewer } from "../../components/ModelViewer";
 import { useProject } from "../../api/useProjects";
 import { useProjectActions } from "../../api/useProjectActions";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
@@ -14,13 +16,23 @@ interface RevealProps {
   onNavigate: (route: Route) => void;
 }
 
+type ViewMode = "render" | "model" | "wireframe";
+
+const VIEWS: { id: ViewMode; label: string; icon: LucideIcon; needsGlb: boolean }[] = [
+  { id: "render", label: "Render", icon: Icons.viewRender, needsGlb: false },
+  { id: "model", label: "3D", icon: Icons.viewModel, needsGlb: true },
+  { id: "wireframe", label: "Wireframe", icon: Icons.viewWireframe, needsGlb: true },
+];
+
 function formatBytes(bytes: number): string {
   if (bytes >= 1_000_000) return `${(bytes / 1_048_576).toFixed(1)} MB`;
   return `${Math.round(bytes / 1024)} KB`;
 }
 
-/** Splits the display name so the last word can carry the emphasis weight —
- *  the Apple product-page headline convention, applied to a real asset name. */
+/** Splits the display name so the last word can carry the emphasis — the Apple
+ *  product-page headline convention, applied to a real asset name. The emphasis
+ *  is carried by value rather than weight (see .reveal-headline b), because the
+ *  display face has only one weight. */
 function headlineParts(displayName: string): [string, string] {
   const words = displayName.trim().split(/\s+/);
   if (words.length <= 1) return ["", displayName];
@@ -32,6 +44,10 @@ export function Reveal({ name, onNavigate }: RevealProps) {
   const { openInBlender, openFolder, deleteProject, busyName, error: actionError } =
     useProjectActions(() => onNavigate("dashboard"));
   const [confirming, setConfirming] = useState(false);
+  // The interactive viewer existed but was reachable only from Workbench, and only
+  // while a run had just exported a GLB — so a saved asset could not be looked at
+  // in 3D anywhere in the app. This is that control.
+  const [view, setView] = useState<ViewMode>("render");
   const busy = busyName === name;
 
   if (loading) {
@@ -102,18 +118,42 @@ export function Reveal({ name, onNavigate }: RevealProps) {
 
       <div className="reveal-stage">
         <div className="reveal-spot" />
-        <div className="reveal-shadow" />
         <div className="reveal-asset-wrap">
-          {project.preview_url ? (
-            <img
-              className="reveal-asset-img"
-              src={apiFileUrl(project.preview_url)}
-              alt={project.display_name}
-            />
+          {view === "render" ? (
+            project.preview_url ? (
+              <img
+                className="reveal-asset-img"
+                src={apiFileUrl(project.preview_url)}
+                alt={project.display_name}
+              />
+            ) : (
+              <p className="reveal-status">No render available</p>
+            )
           ) : (
-            <p className="reveal-status">No render available</p>
+            <ModelViewer src={glbFile?.url ?? null} wireframe={view === "wireframe"} />
           )}
         </div>
+      </div>
+
+      <div className="reveal-views" role="group" aria-label="View mode">
+        {VIEWS.map((v) => {
+          // Only the still exists without an exported GLB; the other two would
+          // load nothing, so they say why rather than failing silently.
+          const disabled = v.needsGlb && !glbFile;
+          return (
+            <button
+              key={v.id}
+              className={`reveal-view${view === v.id ? " active" : ""}`}
+              aria-pressed={view === v.id}
+              disabled={disabled}
+              title={disabled ? "This asset has no exported GLB" : undefined}
+              onClick={() => setView(v.id)}
+            >
+              <Icon icon={v.icon} size={13} />
+              {v.label}
+            </button>
+          );
+        })}
       </div>
 
       <div className="reveal-cta">

@@ -16,10 +16,18 @@
   gap: 8px;
 }
 
+/* Not the display face, deliberately. Playwrite's character lives in its
+   lowercase joins; set in all-caps it flattens into a slightly wobbly light sans
+   that reads as weaker than a plainly-tracked Plex, for no gain. The name stays
+   ARGUS everywhere (paper, README, window title), so the wordmark is set as a
+   wordmark and Playwrite is spent where it actually earns something: the
+   Dashboard title and the Reveal headline. */
 .top-nav-brand b {
-  font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  color: var(--text);
 }
 
 .top-nav a {

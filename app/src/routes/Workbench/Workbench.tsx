@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { apiPost } from "../../api/client";
 import { useEventStream } from "../../api/useEventStream";
 import { useProjects } from "../../api/useProjects";
+import { Icon, Icons } from "../../components/Icon";
 import { Logo } from "../../components/Logo";
 import type { Route } from "../../routes";
 import { ApprovalDialog } from "./ApprovalDialog";
@@ -45,7 +46,7 @@ function elapsedLabel(startedAt: number | null, now: number): string {
 
 export function Workbench({ onNavigate, onOpenProject }: WorkbenchProps) {
   const { state: run } = useEventStream();
-  const { projects, refresh } = useProjects();
+  const { projects, error: projectsError, refresh } = useProjects();
   const [error, setError] = useState<string | null>(null);
   const [approvalPending, setApprovalPending] = useState(false);
   const [cancelling, setCancelling] = useState(false);
@@ -157,7 +158,12 @@ export function Workbench({ onNavigate, onOpenProject }: WorkbenchProps) {
           </div>
         </div>
 
-        <Inspector run={run} recent={projects} onOpenProject={onOpenProject} />
+        <Inspector
+          run={run}
+          recent={projects}
+          recentError={projectsError}
+          onOpenProject={onOpenProject}
+        />
 
         <div className="wb-statusbar">
           <span
@@ -185,7 +191,7 @@ export function Workbench({ onNavigate, onOpenProject }: WorkbenchProps) {
           <span className="wb-sp" />
           {busy && (
             <button className="wb-link wb-link-danger" disabled={cancelling} onClick={cancel}>
-              {cancelling ? "Cancelling…" : "Cancel"}
+              <Icon icon={Icons.cancel} size={12} /> {cancelling ? "Cancelling…" : "Cancel"}
             </button>
           )}
           {run.completed && (
@@ -193,7 +199,7 @@ export function Workbench({ onNavigate, onOpenProject }: WorkbenchProps) {
               className="wb-link"
               onClick={() => run.completed?.run_id && onOpenProject(run.completed.run_id)}
             >
-              View result ›
+              View result <Icon icon={Icons.viewResult} size={12} />
             </button>
           )}
           <span>{elapsedLabel(run.startedAt, now)}</span>

@@ -1,0 +1,136 @@
+.setup {
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-5);
+  background: var(--bg);
+}
+
+.setup-card {
+  width: min(480px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-7);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+  background: var(--panel, var(--surface));
+}
+
+.setup-card h1 {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 300;
+  font-size: 24px;
+  letter-spacing: 0;
+  line-height: 1.35;
+  color: var(--text);
+}
+
+.setup-lede {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.setup-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid color-mix(in srgb, var(--warning) 35%, var(--line));
+  border-radius: var(--radius-s);
+  font-size: 12.5px;
+  color: var(--warning);
+}
+
+.setup-banner svg { flex: none; }
+
+.setup-card label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  /* Flex items default to min-width:auto, so an unbreakable string — which is
+     exactly what a tunnel URL is — pushes the field wider than its container
+     instead of wrapping. */
+  min-width: 0;
+  font-size: 11px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.setup-card input {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12.5px;
+  padding: 10px 12px;
+  transition: border-color var(--duration-fast) var(--ease);
+}
+
+.setup-card input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.setup-card small {
+  font-size: 11.5px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--dim, var(--muted));
+  line-height: 1.5;
+}
+
+.setup-card code {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent-text);
+  /* URLs and paths have no break opportunities; without this they overflow the
+     card rather than wrapping inside it. */
+  overflow-wrap: anywhere;
+}
+
+.setup-error {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--danger);
+}
+
+.setup-submit {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-s);
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 13px;
+  padding: 11px;
+  cursor: pointer;
+  transition: filter var(--duration-fast) var(--ease);
+}
+
+.setup-submit:hover:not(:disabled) { filter: brightness(1.08); }
+.setup-submit:disabled { opacity: 0.4; cursor: default; }
+
+.setup-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--line);
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.setup-note svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--warning);
+}

@@ -1,3 +1,4 @@
+import { Icon, Icons } from "../../components/Icon";
 import type { ApprovalRequest } from "../../api/useEventStream";
 
 interface ApprovalDialogProps {
@@ -35,10 +36,10 @@ export function ApprovalDialog({ request, onDecide, pending }: ApprovalDialogPro
         </table>
         <div className="wb-modal-actions">
           <button className="wb-btn-ghost" disabled={pending} onClick={() => onDecide(false)}>
-            Skip
+            <Icon icon={Icons.cancel} size={13} /> Skip
           </button>
           <button className="wb-btn-primary" disabled={pending} onClick={() => onDecide(true)}>
-            Save as reference
+            <Icon icon={Icons.confirm} size={13} /> Save as reference
           </button>
         </div>
       </div>

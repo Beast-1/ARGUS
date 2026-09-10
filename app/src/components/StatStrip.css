@@ -1,30 +1,52 @@
 .stat-strip {
   display: grid;
+  grid-template-columns: repeat(var(--stat-count, 4), 1fr);
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
 }
 
 .stat-strip-item {
-  padding: 18px 4px;
+  padding: var(--space-5) var(--space-1);
   text-align: center;
   border-right: 1px solid var(--line);
+  min-width: 0;
 }
 
 .stat-strip-item:last-child {
   border-right: none;
 }
 
+/* Four cells stop holding their labels somewhere under 560px — "CLEAN TOPOLOGY"
+   is 14 characters. Two rows of two, with a rule between the rows so the block
+   still reads as a table rather than as four loose figures. */
+@media (max-width: 560px) {
+  .stat-strip { grid-template-columns: repeat(2, 1fr); }
+  .stat-strip-item { padding: var(--space-4) var(--space-2); }
+  .stat-strip-item:nth-child(2n) { border-right: none; }
+  .stat-strip-item:nth-child(-n + 2) { border-bottom: 1px solid var(--line); }
+}
+
 .stat-strip-n {
   font-family: var(--sans-light);
   font-weight: 200;
-  font-size: 24px;
+  font-size: 26px;
   font-variant-numeric: tabular-nums;
 }
 
 .stat-strip-l {
-  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin-top: var(--space-2);
   font-size: 10.5px;
   letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--muted);
+}
+
+.stat-strip-icon {
+  flex: none;
+  color: var(--accent-soft);
+  opacity: 0.85;
 }

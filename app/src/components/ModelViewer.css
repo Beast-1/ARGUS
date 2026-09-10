@@ -1,6 +1,10 @@
+/* Fills its positioned container. The 26px top inset that used to live here was
+   the height of Workbench's view-tab strip — one consumer's layout baked into a
+   shared component, which is why this couldn't be reused on Reveal. Workbench now
+   applies that offset itself. */
 .model-viewer {
   position: absolute;
-  inset: 26px 0 0 0;
+  inset: 0;
   display: flex;
 }
 

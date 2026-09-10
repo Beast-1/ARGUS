@@ -1,25 +1,81 @@
-/* Shared primitives — font stacks, radii, brand accent, semantic status colours.
-   Palette lives in theme-workbench.css / theme-reveal.css, which map the SAME semantic
-   token names (--bg/--text/--muted/--line) to their own values, so shared components
-   style against those names and render correctly under either theme. */
+/* Shared primitives — font stacks, radii, brand accent, semantic status colours,
+   spacing scale, motion. Palette lives in theme-workbench.css / theme-reveal.css,
+   which map the SAME semantic token names (--bg/--text/--muted/--line) to their
+   own values, so shared components style against those names and render
+   correctly under either theme. */
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-weight: 100 700;
+  font-style: normal;
+  font-display: swap;
+  src: url("../assets/fonts/IBMPlexSans-Variable.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Playwrite US Modern";
+  font-weight: 100 400;
+  font-style: normal;
+  font-display: swap;
+  src: url("../assets/fonts/PlaywriteUSModern-Variable.woff2") format("woff2");
+}
+
 :root {
-  --sans: "Segoe UI", "Segoe UI Semibold", system-ui, -apple-system, sans-serif;
-  --sans-light: "Segoe UI Light", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --sans: "IBM Plex Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --sans-light: "IBM Plex Sans", "Segoe UI Light", system-ui, -apple-system, sans-serif;
   --mono: "Cascadia Code", "Consolas", monospace;
 
+  /* Display face — the wordmark and hero headings only. Playwrite is a
+     school-handwriting design: expressive at 26px+, but it has no business
+     inside an instrument panel whose labels run 10-13px, where it would cost
+     real legibility for no gain. Display fonts earn their keep by contrast with
+     the workhorse, not by replacing it. */
+  --display: "Playwrite US Modern", "IBM Plex Sans", cursive;
+
+  /* Tight radii on purpose. Soft 6-8px corners are the house style of every
+     glassy AI product; hairline-and-near-square reads as an instrument. */
   --radius-s: 2px;
-  --radius-m: 6px;
+  --radius-m: 3px;
   --radius-pill: 999px;
 
-  /* Brand accent — global, not per-theme: the ARGUS mark is the one element that
-     must read identically in Workbench's charcoal and Reveal's black. */
-  --accent: #8b5cf6;
-  --accent-deep: #5b3aa8;
-  --accent-soft: #a996e8;
+  /* Brass/amber — global, not per-theme: the ARGUS mark is the one element that
+     must read identically in Workbench's charcoal and Reveal's black. Chosen to
+     replace a generic "AI product" violet with something tangible and material —
+     a nod to the physical objects ARGUS actually builds. All four checked at
+     4.5:1+ against both theme backgrounds except --accent-deep, which is
+     decorative-only (hover/pressed fills, the logo's dark bar) and never used
+     for text. */
+  --accent: #c68a4e;        /* 6.5:1 / 7.2:1 — buttons, focus rings, borders */
+  --accent-deep: #8a5a30;   /* 3.3:1 — decorative fills only, not text */
+  --accent-soft: #d9a468;   /* 8.6:1 — secondary text, mid-tone accents */
+  --accent-text: #ecc998;   /* 12:1+ — accent-colored labels on dark surfaces */
 
   --success: #4ade80;
   --warning: #f5b942;
   --danger: #f2716a;
+
+  /* Spacing scale — replaces ad hoc pixel values scattered through the CSS. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* Motion — one shared easing/duration vocabulary instead of one-off values
+     inlined per component. */
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-base: 0ms;
+  }
 }
 
 * {
@@ -34,4 +90,5 @@ html, body, #root {
 body {
   font-family: var(--sans);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }

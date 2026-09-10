@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { AssetThumbnail } from "../../components/AssetThumbnail";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
+import { Icon, Icons } from "../../components/Icon";
 import { ScoreBadge } from "../../components/ScoreBadge";
 import { useProjectActions } from "../../api/useProjectActions";
 import type { ProjectSummary } from "../../api/types";
@@ -13,7 +14,8 @@ interface AssetCardProps {
 }
 
 export function AssetCard({ project, onOpen, onDeleted }: AssetCardProps) {
-  const { openInBlender, openFolder, deleteProject, busyName } = useProjectActions(onDeleted);
+  const { openInBlender, openFolder, deleteProject, busyName, error } =
+    useProjectActions(onDeleted);
   const [confirming, setConfirming] = useState(false);
   const busy = busyName === project.name;
 
@@ -36,7 +38,7 @@ export function AssetCard({ project, onOpen, onDeleted }: AssetCardProps) {
             openInBlender(project.name);
           }}
         >
-          Blender
+          <Icon icon={Icons.blender} /> Blender
         </button>
         <button
           title="Open folder"
@@ -46,7 +48,7 @@ export function AssetCard({ project, onOpen, onDeleted }: AssetCardProps) {
             openFolder(project.name);
           }}
         >
-          Folder
+          <Icon icon={Icons.folder} /> Folder
         </button>
         <button
           title="Delete"
@@ -57,7 +59,7 @@ export function AssetCard({ project, onOpen, onDeleted }: AssetCardProps) {
             setConfirming(true);
           }}
         >
-          Delete
+          <Icon icon={Icons.delete} /> Delete
         </button>
       </div>
 
@@ -67,6 +69,11 @@ export function AssetCard({ project, onOpen, onDeleted }: AssetCardProps) {
         severityColor={project.severity_color}
         topologySeverity={project.topology_severity}
       />
+      {error && busy === false && (
+        <div className="asset-card-error" onClick={(e) => e.stopPropagation()}>
+          {error}
+        </div>
+      )}
 
       {confirming && (
         <ConfirmDialog

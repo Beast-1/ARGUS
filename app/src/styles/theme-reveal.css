@@ -10,7 +10,11 @@
   --text: #f5f5f7;
   --muted: #86868b;
   --line: #2a2a2c;
-  --link: #2997ff;
+  /* Was Apple's #2997ff, taken with the rest of this palette. It has to go: the
+     brand accent is brass, and a blue link is a second, unrelated accent
+     competing with it two inches away from a brass button. --accent-soft clears
+     8.6:1 on this black, so nothing is lost but the mismatch. */
+  --link: var(--accent-soft);
 
   --surface: #0a0a0a;  /* asset tiles sit slightly above pure black */
   --footnote: #48484a;

@@ -3,19 +3,24 @@
 }
 
 .dashboard-head {
-  padding: 44px 40px 0;
+  /* The bottom padding is not decorative: Playwrite's descenders are deep enough
+     that the "y" in "Library" crossed the stat strip's top rule without it. */
+  padding: var(--space-8) var(--space-7) var(--space-5);
   display: flex;
-  align-items: flex-end;
+  align-items: baseline;
   justify-content: space-between;
-  gap: 20px;
+  gap: var(--space-5);
   flex-wrap: wrap;
 }
 
 .dashboard-title {
-  font-family: var(--sans-light);
-  font-weight: 300;
-  font-size: 38px;
-  letter-spacing: -0.01em;
+  font-family: var(--display);
+  /* 400 is the top of Playwrite's variable range. At 300 a handwriting face this
+     delicate reads as spindly rather than deliberate, especially on black. */
+  font-weight: 400;
+  font-size: clamp(30px, 4.6vw, 44px);
+  letter-spacing: 0;
+  line-height: 1.5;
   margin: 0;
 }
 
@@ -30,15 +35,28 @@
 }
 
 .dashboard-status {
-  margin: 40px 40px 0;
+  margin: var(--space-7) var(--space-7) 0;
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-m);
   font-size: 13px;
   color: var(--muted);
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
+}
+
+.dashboard-status svg {
+  flex: none;
+  color: var(--muted);
 }
 
 .dashboard-status-error {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 35%, var(--line));
+}
+
+.dashboard-status-error svg {
   color: var(--danger);
 }
 
@@ -47,14 +65,38 @@
   border: 1px solid var(--line);
   color: var(--text);
   border-radius: var(--radius-s);
-  padding: 4px 10px;
+  padding: 4px 12px;
   font-size: 12px;
   cursor: pointer;
+  margin-left: auto;
+  transition: border-color var(--duration-fast) var(--ease);
+}
+
+.dashboard-status button:hover {
+  border-color: var(--accent-deep);
+}
+
+/* Rules stay full-bleed (they read as page rules); the cells inset to the same
+   gutter as the grid below, so the numbers line up with the first card instead of
+   starting at the window edge. */
+.dashboard .stat-strip {
+  padding-inline: var(--space-7);
 }
 
 .dashboard-grid {
-  padding: 36px 40px 50px;
+  padding: var(--space-6) var(--space-7) var(--space-8);
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 36px 28px;
+  /* Wider minimum than before: the tiles are 16:9 now, so a 220px column is only
+     124px tall and the render inside it stops being readable. */
+  grid-template-columns: repeat(auto-fill, minmax(264px, 1fr));
+  gap: var(--space-6) var(--space-5);
+}
+
+@media (max-width: 640px) {
+  .dashboard-head { padding: var(--space-6) var(--space-5) var(--space-4); }
+  .dashboard .stat-strip { padding-inline: var(--space-5); }
+  .dashboard-grid {
+    padding: var(--space-5) var(--space-5) var(--space-7);
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
 }

@@ -1,18 +1,29 @@
+/* 16:9, matching the renderer's fixed 960x540 output exactly.
+   It used to be a square holding the render at 82% with object-fit:contain,
+   which letterboxed every 16:9 image inside a square tile — measured at 143px of
+   dead black per card. The floating-object look that was meant to buy doesn't
+   work here anyway, because the render has its own grey backdrop baked in: what
+   actually floated was a grey rectangle. Matching the tile to the image lets that
+   backdrop read as the tile's own surface. */
 .asset-thumb {
-  aspect-ratio: 1;
+  aspect-ratio: 16 / 9;
   background: var(--surface);
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-m);
   transition: background 0.18s ease;
 }
 
 .asset-thumb-img {
-  width: 82%;
-  height: 82%;
-  object-fit: contain;
-  filter: drop-shadow(0 10px 12px rgba(0, 0, 0, 0.5));
+  width: 100%;
+  height: 100%;
+  /* cover, not contain: the ratios are identical, so nothing is cropped — this
+     only guards against a legacy render with a different aspect. */
+  object-fit: cover;
+  display: block;
 }
 
 .asset-thumb-empty {

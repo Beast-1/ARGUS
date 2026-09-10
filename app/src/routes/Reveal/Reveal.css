@@ -28,18 +28,31 @@
   margin: 0 0 18px;
 }
 
+/* The one screen that is purely a presentation of a finished object, so it's
+   where the display face is worth its legibility cost. line-height is 1.42 rather
+   than the 1.08 a sans would take here: Playwrite's ascenders and descenders are
+   drawn for ruled school paper and collide with adjacent lines below about 1.35.
+   letter-spacing stays at 0 — cursive letterforms are drawn to join, and tracking
+   them apart breaks the joins. */
 .reveal-headline {
-  font-family: var(--sans-light);
-  font-weight: 300;
-  font-size: 54px;
-  line-height: 1.08;
-  letter-spacing: -0.015em;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(30px, 5.2vw, 52px);
+  line-height: 1.42;
+  letter-spacing: 0;
   margin: 0 auto;
   max-width: 820px;
   text-wrap: balance;
+  color: var(--muted);
 }
 
-.reveal-headline b { font-weight: 600; }
+/* Playwrite tops out at 400, so the last word can't be emphasised by weight the
+   way the sans version did. Value carries it instead: the lead sits at --muted
+   and the emphasis at full --text. */
+.reveal-headline b {
+  font-weight: 400;
+  color: var(--text);
+}
 
 .reveal-sub {
   margin: 22px auto 0;
@@ -61,47 +74,100 @@
   margin-top: 26px;
 }
 
+/* This stage was built for a cut-out object floating in black: a spotlight from
+   above, an elliptical contact shadow beneath, and a slow bob. None of it could
+   ever have worked, because the renderer bakes an opaque grey backdrop into the
+   PNG — so the spotlight and contact shadow were drawn behind a solid rectangle,
+   and what bobbed was the rectangle.
+   The render is a photograph, so it is now framed as one: a plate with a hairline
+   edge and a real cast shadow. The spot survives as a backlight behind the plate,
+   where it has something to do. (Rendering with a transparent film would let the
+   original design work for real, but that changes what the vision scorer sees, so
+   it is a pipeline decision rather than a CSS one.) */
 .reveal-spot {
   position: absolute;
-  top: -40px;
-  width: 640px;
-  max-width: 90vw;
-  height: 420px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 760px;
+  max-width: 96vw;
+  height: 460px;
   background: radial-gradient(
-    ellipse at 50% 0%,
-    rgba(255, 255, 255, 0.1) 0%,
-    rgba(255, 255, 255, 0) 62%
+    ellipse at 50% 50%,
+    rgba(255, 255, 255, 0.07) 0%,
+    rgba(255, 255, 255, 0) 68%
   );
   pointer-events: none;
 }
 
-.reveal-shadow {
-  position: absolute;
-  bottom: 44px;
-  width: 220px;
-  height: 34px;
-  border-radius: 50%;
-  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0) 72%);
-}
-
+/* Fixed 16:9 (the renderer's own ratio) rather than sizing to the image, so the
+   frame doesn't resize when the still is swapped for the interactive viewer —
+   and so the viewer, which fills its positioned container, has a height at all. */
 .reveal-asset-wrap {
   position: relative;
   z-index: 1;
-  animation: reveal-float 5s ease-in-out infinite;
+  width: min(620px, 88vw);
+  aspect-ratio: 16 / 9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-m);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: 0 26px 60px -18px rgba(0, 0, 0, 0.9);
+  animation: reveal-plate var(--duration-base) var(--ease) both;
 }
 
 .reveal-asset-img {
   display: block;
-  max-width: 400px;
-  max-height: 340px;
-  width: auto;
-  height: auto;
-  filter: drop-shadow(0 22px 26px rgba(0, 0, 0, 0.55));
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
-@keyframes reveal-float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-7px); }
+/* ---- view switcher ----
+   Sits directly under the plate, centred on the page's axis and always visible.
+   It could have been a hover-revealed overlay in the plate's corner, but the
+   whole problem being fixed is that this capability was undiscoverable. */
+.reveal-views {
+  display: flex;
+  justify-content: center;
+  gap: 1px;
+  margin: var(--space-4) auto 0;
+  padding: 1px;
+  width: fit-content;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+}
+
+.reveal-view {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: transparent;
+  border: none;
+  border-radius: 2px;
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: 12.5px;
+  cursor: pointer;
+  transition:
+    background var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease);
+}
+
+.reveal-view:hover:not(:disabled) { color: var(--text); }
+.reveal-view.active { background: var(--surface); color: var(--text); }
+.reveal-view:disabled { opacity: 0.35; cursor: default; }
+.reveal-view:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* A one-shot settle on arrival rather than a perpetual loop. Motion that never
+   stops stops meaning anything, and a framed plate has no reason to hover. */
+@keyframes reveal-plate {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -159,6 +225,9 @@
 }
 
 .reveal-foot-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   background: none;
   border: none;
   padding: 0;
@@ -166,6 +235,11 @@
   font-family: var(--sans);
   font-size: 11.5px;
   cursor: pointer;
+  transition: color var(--duration-fast) var(--ease);
+}
+
+.reveal-foot-actions button svg {
+  flex: none;
 }
 
 .reveal-foot-actions button:hover {

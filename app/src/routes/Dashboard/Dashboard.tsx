@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { TopNav } from "../../components/TopNav";
 import type { Route } from "../../routes";
+import { Icon, Icons } from "../../components/Icon";
 import { StatStrip } from "../../components/StatStrip";
 import { AssetCard } from "./AssetCard";
 import { useProjects } from "../../api/useProjects";
@@ -38,10 +39,10 @@ export function Dashboard({ onNavigate, onOpenProject }: DashboardProps) {
         )}%`
       : "—";
     return [
-      { value: runsToday, label: "Runs today" },
-      { value: 0, label: "In progress" },
-      { value: avgScore, label: "Avg. score" },
-      { value: cleanPct, label: "Clean topology" },
+      { value: runsToday, label: "Runs today", icon: Icons.runsToday },
+      { value: 0, label: "In progress", icon: Icons.inProgress },
+      { value: avgScore, label: "Avg. score", icon: Icons.avgScore },
+      { value: cleanPct, label: "Clean topology", icon: Icons.cleanTopology },
     ];
   }, [projects]);
 
@@ -58,15 +59,24 @@ export function Dashboard({ onNavigate, onOpenProject }: DashboardProps) {
 
       <StatStrip stats={stats} />
 
-      {loading && <div className="dashboard-status">Loading…</div>}
+      {loading && (
+        <div className="dashboard-status">
+          <Icon icon={Icons.inProgress} size={15} />
+          Loading…
+        </div>
+      )}
       {error && (
         <div className="dashboard-status dashboard-status-error">
+          <Icon icon={Icons.warning} size={15} />
           Couldn't reach the API — is it running? ({error})
           <button onClick={refresh}>Retry</button>
         </div>
       )}
       {!loading && !error && projects.length === 0 && (
-        <div className="dashboard-status">No assets yet. Generate one from Workbench.</div>
+        <div className="dashboard-status">
+          <Icon icon={Icons.blender} size={15} />
+          No assets yet. Generate one from Workbench.
+        </div>
       )}
 
       <div className="dashboard-grid">

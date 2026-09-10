@@ -1,3 +1,4 @@
+import { Icon, Icons } from "./Icon";
 import "./ConfirmDialog.css";
 
 interface ConfirmDialogProps {
@@ -34,7 +35,10 @@ export function ConfirmDialog({
       }}
     >
       <div className="confirm-box" onClick={(e) => e.stopPropagation()}>
-        <h3>{title}</h3>
+        <h3>
+          {danger && <Icon icon={Icons.warning} size={16} className="confirm-icon-danger" />}
+          {title}
+        </h3>
         <p>{body}</p>
         <div className="confirm-actions">
           <button className="confirm-btn-ghost" disabled={pending} onClick={onCancel}>

@@ -17,10 +17,18 @@
 }
 
 .confirm-box h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin: 0 0 10px;
   font-size: 15px;
   font-weight: 600;
   color: var(--text);
+}
+
+.confirm-icon-danger {
+  flex: none;
+  color: var(--danger);
 }
 
 .confirm-box p {
@@ -46,6 +54,7 @@
   border-radius: var(--radius-s);
   cursor: pointer;
   border: 1px solid transparent;
+  transition: background var(--duration-fast) var(--ease), opacity var(--duration-fast) var(--ease);
 }
 
 .confirm-btn-ghost {

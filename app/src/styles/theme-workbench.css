@@ -20,7 +20,8 @@
   --grid-line: #101012;   /* viewport graph-paper backdrop */
   --grid-bg: #0c0c0e;
 
-  --accent-text: #c6b3fb;
+  /* --accent-text comes from tokens.css (global brand token) — no per-theme
+     override needed now that it isn't tied to a specific violet shade. */
 
   background: var(--bg);
   color: var(--text);

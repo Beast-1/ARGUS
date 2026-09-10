@@ -5,10 +5,11 @@ import { STAGE_SEQUENCE } from "./stages";
 interface InspectorProps {
   run: RunState;
   recent: ProjectSummary[];
+  recentError?: string | null;
   onOpenProject: (name: string) => void;
 }
 
-export function Inspector({ run, recent, onOpenProject }: InspectorProps) {
+export function Inspector({ run, recent, recentError, onOpenProject }: InspectorProps) {
   const seen = new Set(run.stages.map((s) => s.number));
   const currentNumber = run.currentStage?.number;
 
@@ -56,7 +57,9 @@ export function Inspector({ run, recent, onOpenProject }: InspectorProps) {
 
       <div className="wb-insp wb-field-last">
         <p className="wb-field-label">Recent runs</p>
-        {recent.length === 0 ? (
+        {recentError ? (
+          <p className="wb-empty">Couldn't load recent runs — {recentError}</p>
+        ) : recent.length === 0 ? (
           <p className="wb-empty">No assets yet.</p>
         ) : (
           recent.slice(0, 6).map((p) => (
