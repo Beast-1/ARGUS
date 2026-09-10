@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { apiUrl } from "../../api/client";
+import { apiFileUrl } from "../../api/client";
 import { useProject } from "../../api/useProjects";
 import { useProjectActions } from "../../api/useProjectActions";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
+import { Icon, Icons } from "../../components/Icon";
 import { StatStrip, type Stat } from "../../components/StatStrip";
 import { TopNav } from "../../components/TopNav";
 import type { Route } from "../../routes";
@@ -62,19 +63,23 @@ export function Reveal({ name, onNavigate }: RevealProps) {
     {
       value: project.visual_score === null ? "—" : `${project.visual_score}`,
       label: "Visual score",
+      icon: Icons.avgScore,
     },
     {
       value: project.topology_severity ?? "—",
       label: "Topology",
       color: project.topology_severity ? project.severity_color : undefined,
+      icon: Icons.cleanTopology,
     },
     {
       value: project.triangle_count === null ? "—" : project.triangle_count.toLocaleString(),
       label: "Triangles",
+      icon: Icons.triangles,
     },
     {
       value: project.material_count === null ? "—" : `${project.material_count}`,
       label: "Materials",
+      icon: Icons.materials,
     },
   ];
 
@@ -102,7 +107,7 @@ export function Reveal({ name, onNavigate }: RevealProps) {
           {project.preview_url ? (
             <img
               className="reveal-asset-img"
-              src={apiUrl(project.preview_url)}
+              src={apiFileUrl(project.preview_url)}
               alt={project.display_name}
             />
           ) : (
@@ -113,12 +118,12 @@ export function Reveal({ name, onNavigate }: RevealProps) {
 
       <div className="reveal-cta">
         {glbFile && (
-          <a className="reveal-btn" href={apiUrl(glbFile.url)} download>
+          <a className="reveal-btn" href={apiFileUrl(glbFile.url)} download>
             Export GLB
           </a>
         )}
         {blendFile && (
-          <a className="reveal-link" href={apiUrl(blendFile.url)} download>
+          <a className="reveal-link" href={apiFileUrl(blendFile.url)} download>
             Download .blend &rsaquo;
           </a>
         )}
@@ -135,17 +140,17 @@ export function Reveal({ name, onNavigate }: RevealProps) {
         </span>
         <span className="reveal-foot-actions">
           <button disabled={busy} onClick={() => openInBlender(name)}>
-            Open in Blender
+            <Icon icon={Icons.blender} size={13} /> Open in Blender
           </button>
           <button disabled={busy} onClick={() => openFolder(name)}>
-            Show in Folder
+            <Icon icon={Icons.folder} size={13} /> Show in Folder
           </button>
           <button
             className="reveal-foot-danger"
             disabled={busy}
             onClick={() => setConfirming(true)}
           >
-            Delete
+            <Icon icon={Icons.delete} size={13} /> Delete
           </button>
         </span>
       </div>

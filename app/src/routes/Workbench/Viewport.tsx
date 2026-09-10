@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { apiUrl } from "../../api/client";
+import { apiFileUrl } from "../../api/client";
+import { Icon, Icons } from "../../components/Icon";
 import { ModelViewer } from "../../components/ModelViewer";
 import type { RunState } from "../../api/useEventStream";
 
@@ -73,15 +74,18 @@ export function Viewport({ run, livePreviewUrl, glbUrl }: ViewportProps) {
             {livePreviewUrl ? (
               <>
                 <div className="wb-shadow" />
-                <img className="wb-asset-img" src={apiUrl(livePreviewUrl)} alt="current render" />
+                <img className="wb-asset-img" src={apiFileUrl(livePreviewUrl)} alt="current render" />
               </>
             ) : (
               <div className="wb-viewport-empty">
-                {run.status === "running"
-                  ? stage
-                    ? `${stage.title}…`
-                    : "Starting…"
-                  : "No render yet"}
+                {run.status !== "running" && <Icon icon={Icons.blender} size={22} />}
+                <span>
+                  {run.status === "running"
+                    ? stage
+                      ? `${stage.title}…`
+                      : "Starting…"
+                    : "No render yet"}
+                </span>
               </div>
             )}
           </div>

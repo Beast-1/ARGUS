@@ -1,4 +1,4 @@
-import { apiUrl } from "../api/client";
+import { apiFileUrl } from "../api/client";
 import "./AssetThumbnail.css";
 
 interface AssetThumbnailProps {
@@ -17,7 +17,7 @@ export function AssetThumbnail({ previewUrl, alt, liveLabel }: AssetThumbnailPro
         </div>
       )}
       {previewUrl ? (
-        <img className="asset-thumb-img" src={apiUrl(previewUrl)} alt={alt} />
+        <img className="asset-thumb-img" src={apiFileUrl(previewUrl)} alt={alt} />
       ) : (
         <div className="asset-thumb-empty">no preview</div>
       )}

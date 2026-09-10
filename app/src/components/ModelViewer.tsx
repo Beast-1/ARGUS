@@ -3,7 +3,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
-import { apiUrl } from "../api/client";
+import { apiFileUrl } from "../api/client";
 import "./ModelViewer.css";
 
 interface ModelViewerProps {
@@ -112,7 +112,7 @@ export function ModelViewer({ src, wireframe }: ModelViewerProps) {
     setStatus("loading");
     let cancelled = false;
     new GLTFLoader().load(
-      apiUrl(src),
+      apiFileUrl(src),
       (gltf) => {
         if (cancelled) return;
         const model = gltf.scene;
