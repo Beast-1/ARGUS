@@ -151,7 +151,7 @@ export function Workbench({ onNavigate, onOpenProject }: WorkbenchProps) {
           <Viewport run={run} livePreviewUrl={livePreviewUrl} glbUrl={glbUrl} />
           <div className="wb-console" ref={logRef}>
             {run.logLines.length === 0 ? (
-              <div className="wb-dim">Pipeline output appears here.</div>
+              <div className="wb-dim">Build log — streams here once a run starts.</div>
             ) : (
               run.logLines.map((line, i) => <div key={i}>{line}</div>)
             )}

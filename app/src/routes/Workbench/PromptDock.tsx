@@ -89,11 +89,13 @@ export function PromptDock({ run, busy, onGenerate, error }: PromptDockProps) {
         </label>
       </div>
 
-      <div className="wb-field-block">
-        <p className="wb-field-label">Live metrics</p>
-        {rows.length === 0 && run.status === "idle" ? (
-          <p className="wb-empty">No run yet.</p>
-        ) : (
+      {/* Rendered only once there is something to report. An always-present block
+          reading "Live metrics / No run yet" occupied a sixth of the dock to say
+          that nothing had happened, which the rest of the idle screen already
+          says. */}
+      {(rows.length > 0 || run.latestScore) && (
+        <div className="wb-field-block">
+          <p className="wb-field-label">Live metrics</p>
           <table className="wb-kv">
             <tbody>
               {run.latestScore && (
@@ -110,8 +112,8 @@ export function PromptDock({ run, busy, onGenerate, error }: PromptDockProps) {
               ))}
             </tbody>
           </table>
-        )}
-      </div>
+        </div>
+      )}
 
       <div className="wb-field-block wb-field-last">
         <button

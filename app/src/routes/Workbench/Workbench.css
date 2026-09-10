@@ -518,3 +518,177 @@ textarea.wb-field { resize: none; height: 56px; line-height: 1.45; }
   .wb-statusbar { grid-column: 1; grid-row: 4; position: sticky; bottom: 0; }
   .wb-path { display: none; }
 }
+
+/* ---- pipeline rail ----
+   The signature element of this screen. It replaces a ten-row key/value table
+   whose every row read "NN label —": the most important thing on the panel, and
+   the most inert.
+
+   Three things the table could not say, and this can:
+     · 55 and 75 are not the 55th and 75th stages, they are the visual passes
+       wedged between 5→6 and 7→8. They branch off the spine with no ordinal, so
+       the odd numbering stops reading as a bug.
+     · Where the time goes. A four-minute run that spends three of them in Script
+       is the single most useful thing an operator can learn while waiting.
+     · How far along the run is — the spine fills to the furthest station reached,
+       so progress is the shape of the rail rather than a separate bar.
+
+   Rows are a fixed 26px precisely so the spine and its fill can be positioned
+   arithmetically instead of guessed at. */
+
+.wb-insp-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.wb-insp-meta {
+  margin: 0 0 6px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.wb-rail { position: relative; }
+
+.wb-rail::before,
+.wb-rail::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  width: 1px;
+}
+
+/* Track: first dot centre to last dot centre (half a row in from each end). */
+.wb-rail::before {
+  top: 13px;
+  bottom: 13px;
+  background: var(--line-soft);
+}
+
+/* Fill: down to the furthest row the run has reached. */
+.wb-rail::after {
+  top: 13px;
+  height: calc(var(--rail-reached, 0) * 26px);
+  background: var(--accent-deep);
+  transition: height var(--duration-base) var(--ease);
+}
+
+.wb-rail-row {
+  position: relative;
+  height: 26px;
+  display: grid;
+  grid-template-columns: 13px 12px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 11.5px;
+  color: var(--dim);
+}
+
+.wb-rail-dot {
+  justify-self: center;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  position: relative;
+  z-index: 1;
+}
+
+.wb-rail-ord {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.wb-rail-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wb-rail-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Amber, and only ever drawn when the count is above one: a repaired run is
+   worth noticing, and "x1" on every pass would be noise. */
+.wb-rail-passes { color: var(--warning); font-weight: 600; }
+
+.wb-rail-ok .wb-rail-dot { background: var(--success); border-color: var(--success); }
+.wb-rail-ok .wb-rail-label,
+.wb-rail-ok .wb-rail-meta { color: var(--muted); }
+
+.wb-rail-run .wb-rail-dot {
+  background: var(--accent);
+  border-color: var(--accent);
+  animation: wb-rail-pulse 1.6s var(--ease) infinite;
+}
+
+.wb-rail-run .wb-rail-label { color: var(--text); font-weight: 600; }
+.wb-rail-run .wb-rail-ord,
+.wb-rail-run .wb-rail-meta { color: var(--accent-text); }
+
+@keyframes wb-rail-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(198, 138, 78, 0.55); }
+  50% { box-shadow: 0 0 0 4px rgba(198, 138, 78, 0); }
+}
+
+/* The inspection passes hang off the spine rather than sitting on it. */
+.wb-rail-loop .wb-rail-dot { width: 5px; height: 5px; transform: translateX(6px); }
+.wb-rail-loop .wb-rail-label { font-style: italic; }
+
+.wb-rail-loop::before {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  width: 7px;
+  height: 1px;
+  background: var(--line-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wb-rail-run .wb-rail-dot { animation: none; }
+  .wb-rail::after { transition: none; }
+}
+
+/* Second line of the idle viewport: the invitation leads, the explanation
+   follows it quietly rather than competing at the same size. */
+.wb-viewport-empty small {
+  font-size: 10.5px;
+  color: var(--dim);
+  opacity: 0.8;
+}
+
+.wb-viewport-empty span { color: var(--muted); }
+
+/* In the two-column band the inspector is a wide, short strip under the viewport,
+   and stacking its three sections there was the wrong shape: the rail's 573px of
+   content scrolled inside 232px while 700px of width sat unused. Side by side,
+   the width does the work and the rail gets most of its height back. Below 760px
+   the shell is a single column with no height cap, so stacking is right again. */
+@media (min-width: 761px) and (max-width: 1000px) {
+  .wb-dock-right {
+    display: grid;
+    grid-template-columns: minmax(200px, 1.1fr) minmax(0, 1fr) minmax(0, 1fr);
+    max-height: 296px;
+  }
+
+  .wb-dock-right .wb-insp {
+    border-bottom: none;
+    border-right: 1px solid var(--line-soft);
+    overflow-y: auto;
+    min-width: 0;
+  }
+
+  .wb-dock-right .wb-insp:last-child { border-right: none; }
+}

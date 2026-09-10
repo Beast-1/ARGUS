@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { INITIAL, reducer, type AppEvent, type RunState } from "./useEventStream";
 
 // Real event shapes service/pipeline_events.py (parsing) and
@@ -31,12 +31,78 @@ describe("run_started", () => {
 });
 
 describe("stage", () => {
+  const stage = (number: number, title: string): AppEvent => ({
+    type: "stage",
+    payload: { number, title, label: title.toUpperCase() },
+  });
+
   it("tracks the current stage and appends unseen stage numbers once", () => {
     let state = INITIAL;
     state = run(state, { type: "stage", payload: { number: 1, title: "Plan", label: "PLAN" } });
     state = run(state, { type: "stage", payload: { number: 1, title: "Plan (retry)", label: "PLAN" } });
     expect(state.stages).toHaveLength(1);
     expect(state.currentStage?.title).toBe("Plan (retry)");
+  });
+
+  // The inspector's rail shows how long each station took. The backend only ever
+  // announces starts, so these are the reducer's own arrival-to-arrival times and
+  // the closing rules below are the whole of that measurement.
+  it("closes the running stage when the next one is announced", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(0));
+    let state = run(INITIAL, stage(1, "Plan"));
+    vi.advanceTimersByTime(4000);
+    state = run(state, stage(2, "Naming"));
+
+    const plan = state.stages.find((s) => s.number === 1)!;
+    expect(plan.elapsedMs).toBe(4000);
+    expect(plan.openSince).toBeNull();
+    // The newly announced stage is the open one and has no duration yet.
+    expect(state.stages.find((s) => s.number === 2)!.openSince).toBe(4000);
+    vi.useRealTimers();
+  });
+
+  it("accumulates time and counts passes when the loop re-enters a stage", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(0));
+    let state = run(INITIAL, stage(55, "Visual"));
+    vi.advanceTimersByTime(5000);
+    state = run(state, stage(6, "Topology")); // closes the first visual pass
+    vi.advanceTimersByTime(1000);
+    state = run(state, stage(55, "Visual")); // loop comes back round
+    vi.advanceTimersByTime(3000);
+    state = run(state, stage(7, "Quality"));
+
+    const visual = state.stages.find((s) => s.number === 55)!;
+    expect(visual.passes).toBe(2);
+    expect(visual.elapsedMs).toBe(8000); // 5s + 3s, not just the last pass
+    expect(state.stages).toHaveLength(3);
+    vi.useRealTimers();
+  });
+
+  it("closes the final stage on a terminal event, idempotently", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(0));
+    let state = run(INITIAL, stage(8, "Reference"));
+    vi.advanceTimersByTime(2000);
+    state = run(state, {
+      type: "complete",
+      payload: {
+        run_id: "r1",
+        asset_name: "crate",
+        glb_path: null,
+        preview_path: null,
+        visual_score: 8,
+      },
+    });
+    expect(state.stages[0].elapsedMs).toBe(2000);
+
+    // A second terminal event must not add the intervening time again — without
+    // the openSince guard, "failed" arriving after "complete" would double it.
+    vi.advanceTimersByTime(9000);
+    state = run(state, { type: "failed", payload: { reason: "late" } });
+    expect(state.stages[0].elapsedMs).toBe(2000);
+    vi.useRealTimers();
   });
 });
 

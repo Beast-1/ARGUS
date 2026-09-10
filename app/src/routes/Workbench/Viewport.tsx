@@ -77,15 +77,20 @@ export function Viewport({ run, livePreviewUrl, glbUrl }: ViewportProps) {
                 <img className="wb-asset-img" src={apiFileUrl(livePreviewUrl)} alt="current render" />
               </>
             ) : (
+              // Two different silences. Mid-run the panel is waiting on a stage and
+              // should name it. Idle, it is the largest empty area on the screen and
+              // the operator's next move belongs here, not a caption saying nothing
+              // is present.
               <div className="wb-viewport-empty">
-                {run.status !== "running" && <Icon icon={Icons.blender} size={22} />}
-                <span>
-                  {run.status === "running"
-                    ? stage
-                      ? `${stage.title}…`
-                      : "Starting…"
-                    : "No render yet"}
-                </span>
+                {run.status === "running" ? (
+                  <span>{stage ? `${stage.title}…` : "Starting…"}</span>
+                ) : (
+                  <>
+                    <Icon icon={Icons.blender} size={22} />
+                    <span>Describe an object, then Generate</span>
+                    <small>Each render lands here as the build progresses.</small>
+                  </>
+                )}
               </div>
             )}
           </div>

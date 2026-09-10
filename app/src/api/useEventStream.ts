@@ -7,6 +7,32 @@ export interface StageEvent {
   label: string;
 }
 
+/** A stage the run has actually entered, plus the timing the inspector needs to
+ *  show where a multi-minute run spends itself.
+ *
+ *  The backend announces stage *starts* and never reports a finish, so a stage is
+ *  closed when the next one is announced, or when the run reaches a terminal
+ *  state. These are therefore arrival-to-arrival times as observed by the UI, not
+ *  server-side durations — accurate enough to answer "what is taking so long",
+ *  and worth being precise about rather than presenting as authoritative. */
+export interface StageRecord extends StageEvent {
+  /** Accumulated across passes; the visual loop re-enters the same stage. */
+  elapsedMs: number;
+  /** Non-null only while this stage is the one running, which makes closing it
+   *  idempotent — several terminal events can fire for one run. */
+  openSince: number | null;
+  /** Entry count. Greater than one means the repair loop went round again. */
+  passes: number;
+}
+
+function closeOpenStages(stages: StageRecord[], at: number): StageRecord[] {
+  return stages.map((s) =>
+    s.openSince === null
+      ? s
+      : { ...s, elapsedMs: s.elapsedMs + (at - s.openSince), openSince: null },
+  );
+}
+
 export interface ScoreEvent {
   value: number;
   kind: "ok" | "run" | "fail";
@@ -43,7 +69,7 @@ export interface CompletePayload {
 export interface RunState {
   status: RunStatus;
   prompt: string | null;
-  stages: StageEvent[];
+  stages: StageRecord[];
   currentStage: StageEvent | null;
   metrics: Record<string, string>;
   scores: ScoreEvent[];
@@ -140,12 +166,20 @@ export function reducer(state: RunState, action: AppEvent): RunState {
     }
     case "stage": {
       const stage = action.payload;
-      const seen = state.stages.some((s) => s.number === stage.number);
+      const at = Date.now();
+      // Whatever was running ends the moment the next stage is announced.
+      const closed = closeOpenStages(state.stages, at);
+      const seen = closed.some((s) => s.number === stage.number);
       return {
         ...state,
         status: state.status === "idle" ? "running" : state.status,
         currentStage: stage,
-        stages: seen ? state.stages : [...state.stages, stage],
+        stages: seen
+          ? // Re-entry: the loop came back round to a stage already recorded.
+            closed.map((s) =>
+              s.number === stage.number ? { ...s, openSince: at, passes: s.passes + 1 } : s,
+            )
+          : [...closed, { ...stage, elapsedMs: 0, openSince: at, passes: 1 }],
       };
     }
     case "log_value": {
@@ -173,8 +207,16 @@ export function reducer(state: RunState, action: AppEvent): RunState {
       return { ...state, status: "awaiting_approval", approval: action.payload };
     case "memory_approval_resolved":
       return { ...state, status: "running", approval: null };
+    // Terminal events all close whatever stage was still open: no successor stage
+    // is coming to do it, so without this the final stage shows no duration.
     case "complete":
-      return { ...state, status: "complete", completed: action.payload, approval: null };
+      return {
+        ...state,
+        status: "complete",
+        completed: action.payload,
+        approval: null,
+        stages: closeOpenStages(state.stages, Date.now()),
+      };
     case "cancel_requested":
       return { ...state, message: "Cancelling…" };
     case "cancelled": {
@@ -197,14 +239,30 @@ export function reducer(state: RunState, action: AppEvent): RunState {
           : null,
         approval: null,
         message: p.reason ?? null,
+        stages: closeOpenStages(state.stages, Date.now()),
       };
     }
     case "rejected":
-      return { ...state, status: "rejected", message: action.payload.reason ?? "Request rejected" };
+      return {
+        ...state,
+        status: "rejected",
+        message: action.payload.reason ?? "Request rejected",
+        stages: closeOpenStages(state.stages, Date.now()),
+      };
     case "failed":
-      return { ...state, status: "failed", message: action.payload.reason ?? "Pipeline failed" };
+      return {
+        ...state,
+        status: "failed",
+        message: action.payload.reason ?? "Pipeline failed",
+        stages: closeOpenStages(state.stages, Date.now()),
+      };
     case "error":
-      return { ...state, status: "error", message: action.payload.message ?? "Unexpected error" };
+      return {
+        ...state,
+        status: "error",
+        message: action.payload.message ?? "Unexpected error",
+        stages: closeOpenStages(state.stages, Date.now()),
+      };
     default:
       return state;
   }
