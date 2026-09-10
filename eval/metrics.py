@@ -172,6 +172,32 @@ def _shape_vocabulary(run_dir: Path, m: AssetMetrics) -> None:
     m.cylinders_tapered = sum(1 for ln in cyl_calls if "r_top=" in ln)
 
 
+# Mirrors main.py:_SEVERITY_PENALTY / _texture_bonus / _effective_score exactly.
+# Kept here so the paper's effective-score figures are derivable by running
+# `python -m eval.report` against runs.jsonl, rather than hand-computed from a
+# results table — the previous hand-derivation is how §V-C ended up reporting
+# the RAW score's pass rate while labelling it the effective score.
+_SEVERITY_PENALTY = {"clean": 0, "medium": 0, "high": 1, "critical": 3}
+_TEXTURE_WORTH_CAP = 2.0
+
+
+def effective_score(record: dict) -> Optional[float]:
+    """main.py's Eq. 1: s_eff = s_vision - p(severity) + min(0.5 * textured, cap).
+
+    Returns None when the record has no vision score to adjust (nothing was
+    built, or scoring itself failed) — those are excluded from pass-rate
+    denominators, same as mean_visual_score does.
+    """
+    score = record.get("visual_score")
+    if not isinstance(score, int):
+        return None
+    penalty = _SEVERITY_PENALTY.get(
+        str(record.get("topology_severity") or "").lower(), 0
+    )
+    bonus = min(0.5 * (record.get("textured_materials") or 0), _TEXTURE_WORTH_CAP)
+    return round(score - penalty + bonus, 2)
+
+
 def summarise(records: list[dict]) -> dict:
     """Aggregate a set of per-asset metric dicts into headline numbers.
 
@@ -186,6 +212,7 @@ def summarise(records: list[dict]) -> dict:
     done = [r for r in usable if r.get("exists")]
     scored = [r for r in done if isinstance(r.get("visual_score"), int)]
     sev = [r.get("topology_severity") for r in done if r.get("topology_severity")]
+    effective = [e for e in (effective_score(r) for r in scored) if e is not None]
 
     def mean(values: list[float]) -> Optional[float]:
         return round(sum(values) / len(values), 2) if values else None
@@ -196,9 +223,14 @@ def summarise(records: list[dict]) -> dict:
         "n_built": len(done),
         "build_rate": round(len(done) / len(usable), 3) if usable else None,
         "mean_visual_score": mean([r["visual_score"] for r in scored]),
+        "mean_effective_score": mean(effective),
         "pct_at_or_above_7": (
             round(100 * sum(1 for r in scored if r["visual_score"] >= 7) / len(scored))
             if scored else None
+        ),
+        "pct_effective_at_or_above_8": (
+            round(100 * sum(1 for e in effective if e >= 8) / len(effective))
+            if effective else None
         ),
         "pct_topology_clean": (
             round(100 * sum(1 for s in sev if s == "clean") / len(sev)) if sev else None

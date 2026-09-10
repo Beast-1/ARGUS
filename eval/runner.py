@@ -22,10 +22,12 @@ Usage
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import json
 import os
 import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
 
@@ -89,10 +91,27 @@ def completed_cells(results_path: Path) -> set[tuple[str, str]]:
 # meaningless score=None indistinguishable from "the model tried and produced
 # nothing"). Matched against the full log, not just the 4000-char tail, so a long
 # retry storm before the final failure doesn't push the signature out of range.
+#
+# The list was network-only for a long time, despite that comment naming quota
+# exhaustion — and quota is what actually bit. Burning the Gemini free tier
+# across back-to-back sweeps left every key 429ing, at which point the pipeline
+# degrades quietly rather than failing: it still plans, still builds, still
+# exports a real asset, and simply skips visual scoring. The cell then records
+# score=None, which is indistinguishable from "the model produced nothing
+# scoreable" — the exact confusion this list exists to prevent. 47 of 148 logs
+# in one sweep carried that marker before it was detectable.
 _ENV_FAILURE_SIGNATURES = [
     "NameResolutionError", "getaddrinfo failed", "Failed to resolve",
     "Max retries exceeded", "ConnectionError", "ConnectionResetError",
     "Temporary failure in name resolution",
+    # Quota/vision-model unavailability. Deliberately the stage-75 skip line and
+    # not "[KEY_POOL] ... cooling": one key cooling while another serves the
+    # request is normal, healthy operation and appears in perfectly good runs.
+    # This message means no vision model was reachable at all, so the run
+    # produced no quality measurement — which, combined with the
+    # produced_usable_result guard in run_cell, is what makes it a real
+    # environment failure rather than a bad asset.
+    "skipped (no vision model",
 ]
 
 
@@ -123,7 +142,13 @@ def run_cell(item: dict, condition: str, out_root: Path, timeout: int,
         full_log = proc.stdout or ""
     except subprocess.TimeoutExpired as exc:
         timed_out = True
-        full_log = (exc.stdout or b"").decode("utf-8", "replace") if exc.stdout else ""
+        # subprocess.run(..., text=True) already decodes captured output, so
+        # exc.stdout on TimeoutExpired is a str here too, not bytes — the previous
+        # unconditional .decode() crashed the whole sweep (not just this cell) the
+        # first time a real timeout actually occurred, discovered live during a
+        # --workers>1 run under machine load heavy enough to push a cell past its
+        # 2100s budget.
+        full_log = exc.stdout or ""
     elapsed = round(time.monotonic() - t0, 1)
 
     # Full stdout is kept on disk, not in the JSON record — a 15-cell sweep would
@@ -135,8 +160,45 @@ def run_cell(item: dict, condition: str, out_root: Path, timeout: int,
         log_path = log_dir / f"{condition}__{item['id']}.log"
         log_path.write_text(full_log, encoding="utf-8", errors="replace")
 
-    env_failure = next((s for s in _ENV_FAILURE_SIGNATURES if s in full_log), None)
     log_tail = full_log[-4000:]
+
+    asset = _find_asset(out_root, log_tail)
+    if asset:
+        result_fields = metrics_mod.collect(asset, out_root / "runs" / asset.name).as_dict()
+    else:
+        result_fields = {"asset": None, "exists": False, "notes": ["no asset directory found"]}
+
+    # A signature substring appearing ANYWHERE in the log is not, on its own,
+    # evidence the environment broke the run — one fallback provider (of five)
+    # being transiently or even permanently unreachable is exactly what the
+    # fallback chain exists to survive, and the log will legitimately contain that
+    # provider's connection error even on a cell that went on to build and score
+    # cleanly. Discovered live: a stale GitHub Models hostname made this fire on
+    # effectively every cell once fixed, wrongly excluding 149 genuinely valid
+    # results from the aggregate stats. Only treat it as an environment failure —
+    # exclude from quality aggregates, retry on next invocation — when the run
+    # ALSO failed to produce the thing the original incident actually lost: a
+    # real, scored asset. This preserves detection of the original incident (which
+    # produced visual_score=None on every affected cell) while no longer punishing
+    # a cell that succeeded anyway.
+    produced_usable_result = bool(result_fields.get("exists")) and \
+        result_fields.get("visual_score") is not None
+    env_failure = None
+    if not produced_usable_result:
+        env_failure = next((s for s in _ENV_FAILURE_SIGNATURES if s in full_log), None)
+        # A known signature is one recognized failure shape; an empty/near-empty
+        # log on a failed cell is another — the process never got far enough to
+        # print anything, which only happens when it was killed before it could
+        # run (observed live: the whole sweep's parent process torn down mid-run
+        # killed several not-yet-started child `main.py` processes near-instantly,
+        # each with a 0-byte log and an OS-level abnormal-termination returncode).
+        # A cell that ran for real always prints substantial stage output even on
+        # failure (Stage 1 alone is thousands of characters) — so "nothing at all"
+        # is never a legitimate quality result, only ever evidence the process
+        # itself didn't run. Must still be excluded + retried, same as a named
+        # signature.
+        if env_failure is None and len(full_log.strip()) < 200:
+            env_failure = f"empty_output(returncode={returncode})"
 
     record = {
         "prompt_id": item["id"],
@@ -150,19 +212,21 @@ def run_cell(item: dict, condition: str, out_root: Path, timeout: int,
         "rejected": "[ARGUS] Request rejected:" in log_tail,
         "env_failure": env_failure,  # e.g. "NameResolutionError" — see above
     }
-
-    asset = _find_asset(out_root, log_tail)
-    if asset:
-        m = metrics_mod.collect(asset, out_root / "runs" / asset.name)
-        record.update(m.as_dict())
-    else:
-        record.update({"asset": None, "exists": False,
-                       "notes": ["no asset directory found"]})
+    record.update(result_fields)
     return record
 
 
 def _find_asset(out_root: Path, log_tail: str) -> Path | None:
-    """Prefer the run id the pipeline printed; fall back to newest folder."""
+    """Prefer the run id the pipeline printed; fall back to newest folder — but
+    only when the log gives SOME reason to believe this cell actually ran. An
+    empty log (the process was killed before it printed anything — observed live
+    when the whole sweep's parent process was torn down mid-run) must not fall
+    through to "newest folder in the condition's shared out_root", because that
+    directory is shared across all 15 prompts for the condition and "newest" then
+    silently attributes an unrelated earlier prompt's real asset to this cell.
+    """
+    if not log_tail.strip():
+        return None
     for line in reversed(log_tail.splitlines()):
         if line.startswith("Project     :"):
             candidate = out_root / "final" / line.split(":", 1)[1].strip()
@@ -183,6 +247,10 @@ def main() -> int:
     ap.add_argument("--ids", help="comma-separated prompt ids (e.g. b01,b09)")
     ap.add_argument("--limit", type=int, help="cap prompts per condition")
     ap.add_argument("--timeout", type=int, default=2100, help="per-cell seconds")
+    ap.add_argument("--workers", type=int, default=1,
+                    help="parallel cells (each cell is still its own isolated "
+                         "subprocess, so this is safe concurrency; default 1 "
+                         "keeps today's exact sequential behavior)")
     ap.add_argument("--results", default=str(RESULTS_DIR / "runs.jsonl"))
     ap.add_argument("--out-root", default=str(REPO / "eval" / "out"))
     ap.add_argument("--log-dir", default=str(RESULTS_DIR / "logs"),
@@ -226,23 +294,37 @@ def main() -> int:
             print(f"  would run [{cond}] {it['id']} {it['prompt'][:52]}")
         return 0
 
-    for n, (cond, it) in enumerate(cells, 1):
+    write_lock = threading.Lock()
+
+    def _do_cell(n: int, cond: str, it: dict) -> None:
         out_root = Path(args.out_root) / cond
         out_root.mkdir(parents=True, exist_ok=True)
         print(f"\n[{n}/{len(cells)}] {cond} :: {it['id']} :: {it['prompt'][:60]}", flush=True)
         record = run_cell(it, cond, out_root, args.timeout, log_dir=Path(args.log_dir))
-        # Append immediately so an interrupted sweep loses at most one cell.
-        with results_path.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(record) + "\n")
+        # Append immediately (lock-protected under --workers>1) so an interrupted
+        # sweep loses at most one cell per in-flight worker.
+        with write_lock:
+            with results_path.open("a", encoding="utf-8") as fh:
+                fh.write(json.dumps(record) + "\n")
         if record.get("env_failure"):
             print(f"    !! ENVIRONMENT FAILURE ({record['env_failure']}) — not a "
                   f"quality result, will retry on next invocation. "
                   f"Full log: {args.log_dir}/{cond}__{it['id']}.log", flush=True)
         else:
-            print(f"    -> score={record.get('visual_score')} "
+            print(f"    -> [{cond}/{it['id']}] score={record.get('visual_score')} "
                   f"sev={record.get('topology_severity')} "
                   f"tex={record.get('textured_materials')} "
                   f"tris={record.get('triangles')} {record['elapsed_sec']}s", flush=True)
+
+    if args.workers <= 1:
+        for n, (cond, it) in enumerate(cells, 1):
+            _do_cell(n, cond, it)
+    else:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=args.workers) as pool:
+            futures = [pool.submit(_do_cell, n, cond, it)
+                       for n, (cond, it) in enumerate(cells, 1)]
+            for fut in concurrent.futures.as_completed(futures):
+                fut.result()  # re-raise so a worker crash surfaces, not gets swallowed
     return 0
 
 

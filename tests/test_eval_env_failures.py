@@ -31,6 +31,33 @@ def test_the_actual_outage_log_is_detected():
     assert any(sig in REAL_OUTAGE_LOG_EXCERPT for sig in _ENV_FAILURE_SIGNATURES)
 
 
+REAL_QUOTA_EXHAUSTION_EXCERPT = (
+    "[STAGE 75] Visual Quality Assessment\n"
+    "----------------------------------------------------\n"
+    "Visual QA         : skipped (no vision model / render available)\n"
+)
+
+
+def test_quota_exhaustion_is_detected_not_just_network_failure():
+    """Second real incident, same shape as the first: back-to-back sweeps burned
+    the Gemini free tier, every key started returning 429, and the pipeline
+    degraded quietly — still planning, building and exporting a real asset, just
+    skipping visual scoring. That recorded score=None, indistinguishable from
+    'the model produced nothing scoreable'. The signature list had been
+    network-only despite its own comment naming quota exhaustion."""
+    assert any(sig in REAL_QUOTA_EXHAUSTION_EXCERPT for sig in _ENV_FAILURE_SIGNATURES)
+
+
+def test_a_cooling_key_alone_is_not_an_environment_failure():
+    """One key cooling while another serves the request is normal operation and
+    shows up in perfectly healthy runs — keying on it would flag everything."""
+    healthy = (
+        "2026-09-10 08:07:03 | WARNING | [KEY_POOL] GOOGLE_API_KEY_2 cooling 4s\n"
+        "Visual QA         : 8/10\n"
+    )
+    assert not any(sig in healthy for sig in _ENV_FAILURE_SIGNATURES)
+
+
 def test_a_normal_failure_log_is_not_misclassified():
     """A model that genuinely produces a bad script must not be excused as an
     environment failure just because some unrelated word overlaps."""

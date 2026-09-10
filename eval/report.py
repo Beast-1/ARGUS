@@ -23,7 +23,9 @@ COLUMNS = [
     ("n_built", "built"),
     ("build_rate", "build%"),
     ("mean_visual_score", "score"),
+    ("mean_effective_score", "eff"),
     ("pct_at_or_above_7", ">=7%"),
+    ("pct_effective_at_or_above_8", "eff>=8%"),
     ("pct_topology_clean", "clean%"),
     ("pct_topology_critical", "crit%"),
     ("pct_assets_textured", "tex%"),
@@ -69,7 +71,10 @@ def load(path: Path, dedupe: bool = True) -> list[dict]:
 
 def fmt(value) -> str:
     if value is None:
-        return "—"
+        # ASCII: this table is read on a Windows console (cp1252 by default),
+        # where an em-dash renders as a replacement glyph and makes a column of
+        # "no data" cells look like corruption rather than absence.
+        return "-"
     if isinstance(value, float):
         return f"{value:g}"
     return str(value)

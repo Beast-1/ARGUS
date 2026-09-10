@@ -11,7 +11,62 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from eval.metrics import collect, summarise  # noqa: E402
+from eval.metrics import collect, effective_score, summarise  # noqa: E402
+
+
+# ---------------------------------------------------------------------------
+# effective_score — must mirror main.py's Eq. 1 exactly, since the paper quotes it
+# ---------------------------------------------------------------------------
+
+def test_effective_score_matches_the_pipelines_own_formula():
+    """s_eff = s_vision - p(severity) + min(0.5 * textured, 2), with
+    p(clean)=p(medium)=0, p(high)=1, p(critical)=3 — copied from
+    main.py:_SEVERITY_PENALTY / _texture_bonus / _effective_score."""
+    # clean topology, no textures: unchanged
+    assert effective_score({"visual_score": 7, "topology_severity": "clean",
+                            "textured_materials": 0}) == 7
+    # medium is explicitly a zero penalty, not a small one
+    assert effective_score({"visual_score": 7, "topology_severity": "medium",
+                            "textured_materials": 0}) == 7
+    # high costs 1, critical costs 3
+    assert effective_score({"visual_score": 7, "topology_severity": "high",
+                            "textured_materials": 0}) == 6
+    assert effective_score({"visual_score": 7, "topology_severity": "critical",
+                            "textured_materials": 0}) == 4
+    # 0.5 per textured material...
+    assert effective_score({"visual_score": 6, "topology_severity": "clean",
+                            "textured_materials": 2}) == 7
+    # ...capped at 2, so 8 textures is worth the same as 4
+    assert effective_score({"visual_score": 6, "topology_severity": "clean",
+                            "textured_materials": 8}) == 8
+    assert effective_score({"visual_score": 6, "topology_severity": "clean",
+                            "textured_materials": 4}) == 8
+
+
+def test_effective_score_is_none_without_a_vision_score():
+    """Nothing built, or scoring itself failed — must not be treated as a 0."""
+    assert effective_score({"visual_score": None, "topology_severity": "clean",
+                            "textured_materials": 0}) is None
+    assert effective_score({}) is None
+
+
+def test_effective_score_reproduces_the_papers_corrected_figure():
+    """The specific error this was added to make impossible to repeat: §V-C
+    reported "5 of 15 (33%)... using the effective score", but 33% is the RAW
+    score's >=8 rate. A clean-topology, well-textured build gets +2 from the
+    texture bonus, which is exactly what moves those cases over the bar."""
+    records = [
+        # raw 7, clean, 4 textures -> 9.0 effective: clears 8 on the bonus alone
+        {"exists": True, "visual_score": 7, "topology_severity": "clean",
+         "textured_materials": 4, "triangles": 100, "elapsed_sec": 10},
+        # raw 8, but critical topology -> 5.0 effective: does NOT clear 8
+        {"exists": True, "visual_score": 8, "topology_severity": "critical",
+         "textured_materials": 0, "triangles": 100, "elapsed_sec": 10},
+    ]
+    s = summarise(records)
+    assert s["pct_at_or_above_7"] == 100          # both are raw >=7
+    assert s["pct_effective_at_or_above_8"] == 50  # only the textured, clean one
+    assert s["mean_effective_score"] == 7.0
 
 
 def write_glb(path: Path, *, textured=0, plain=1, tris=12, images=0) -> None:
