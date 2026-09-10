@@ -692,3 +692,22 @@ textarea.wb-field { resize: none; height: 56px; line-height: 1.45; }
 
   .wb-dock-right .wb-insp:last-child { border-right: none; }
 }
+
+/* Menubar entry to the key vault. Styled as a menu item rather than a button so
+   it reads as part of the bar, but it carries an icon and a live provider count
+   because "can this app build anything right now" is the question it answers. */
+.wb-keys {
+  gap: 6px;
+  background: none;
+  border: none;
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.wb-keys svg { flex: none; }
+
+/* No keys means no build is possible, so the control says so in the accent
+   colour instead of sitting quietly in the muted grey of everything else. */
+.wb-keys-empty { color: var(--accent-text); }
+.wb-keys-empty:hover { color: var(--accent-text); }

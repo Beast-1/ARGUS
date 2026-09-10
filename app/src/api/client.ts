@@ -114,11 +114,21 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     );
   }
   if (!res.ok) {
+    // FastAPI puts the actionable message in `detail`. Without reading it, a
+    // 400 that says "add your own API key in Settings" reached the user as
+    // "POST /api/generate failed: 400", which tells them nothing they can act on.
+    let detail = "";
+    try {
+      const body = await res.json();
+      if (typeof body?.detail === "string") detail = body.detail;
+    } catch {
+      /* not JSON, or an empty body — fall back to the status line below */
+    }
     const what = `${init?.method || "GET"} ${path}`;
     throw new ApiError(
       res.status === 401 || res.status === 403
         ? "Backend rejected the API token."
-        : `${what} failed: ${res.status}`,
+        : detail || `${what} failed: ${res.status}`,
       res.status,
     );
   }

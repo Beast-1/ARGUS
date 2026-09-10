@@ -6,6 +6,7 @@ import os
 import re
 import textwrap
 import time
+from contextvars import ContextVar
 from dataclasses import asdict, dataclass
 from typing import Optional
 
@@ -44,30 +45,14 @@ logger = logging.getLogger("ARGUS.llm")
 # the logger level (rather than fixing each call site) means every current AND
 # future log line through this logger is covered, not just the ones caught by a
 # manual audit — this exact leak already put 1,000+ real keys into logs/argus.log.
-_SECRET_QUERY_PARAM_RE = re.compile(r"([?&]key=)[^&\s'\"]+", re.IGNORECASE)
-_GOOGLE_KEY_RE = re.compile(r"AIzaSy[A-Za-z0-9_-]{10,}")
-
-
-def _redact_secrets(value):
-    if not isinstance(value, str):
-        text = str(value)
-    else:
-        text = value
-    if "key=" not in text and "AIzaSy" not in text:
-        return value
-    redacted = _SECRET_QUERY_PARAM_RE.sub(r"\1***REDACTED***", text)
-    redacted = _GOOGLE_KEY_RE.sub("***REDACTED***", redacted)
-    return redacted
-
-
-class _SecretRedactingFilter(logging.Filter):
-    def filter(self, record: logging.LogRecord) -> bool:
-        if record.args:
-            record.args = tuple(_redact_secrets(a) for a in record.args)
-        if isinstance(record.msg, str):
-            record.msg = _redact_secrets(record.msg)
-        return True
-
+# The implementation moved to core/secrets.py so service/ and eval/ can import it
+# without pulling in this module, and so it could be widened past the two
+# Google-only patterns that were all it covered. It was also attached to this
+# logger alone, which meant every other logger reached logs/argus.log unfiltered;
+# install_redaction() now wraps the root handlers in main.py instead. Re-exported
+# under the old names because the existing tests and call sites use them.
+from core.secrets import SecretRedactingFilter as _SecretRedactingFilter  # noqa: E402
+from core.secrets import redact as _redact_secrets  # noqa: E402
 
 logger.addFilter(_SecretRedactingFilter())
 
@@ -188,6 +173,98 @@ def _build_groq_pool() -> KeyPool:
 _GOOGLE_POOL = _build_google_pool()
 _OPENROUTER_POOL = _build_openrouter_pool()
 _GROQ_POOL = _build_groq_pool()
+
+
+# ---------------------------------------------------------------------------
+# Per-run credentials (core/provider_keys.py)
+#
+# The pools above are built once at import from os.environ, which is correct for
+# the CLI and for a desktop app run by whoever owns the keys. The web app has to
+# support a visitor supplying their own, so every read below goes through an
+# accessor that prefers this run's key set and falls back to the env pools.
+#
+# The gating rule is the whole feature: when a run brings its own keys, a
+# provider it did NOT supply resolves to an empty pool. Every call site already
+# treats an empty pool as "provider unavailable, try the next one", so the
+# existing fallback cascade skips it with no new branching — and the operator's
+# env keys are never substituted in, which is what stops their quota being spent
+# on someone else's generation.
+# ---------------------------------------------------------------------------
+
+_EMPTY_POOL = KeyPool([])
+
+# A KeyPool carries rate-limit state — mark_rate_limited/mark_exhausted and the
+# cooldown timers only mean anything if the same object is reused for the whole
+# run. That is why the env pools above are module singletons, and why a run's
+# pools are built once and cached here rather than rebuilt on each access: a
+# fresh pool per call would forget an exhausted key the instant it was marked,
+# and the run would hammer a dead key until the retry budget ran out.
+#
+# Keyed on the ProviderKeys object itself (frozen, so identity is stable for the
+# life of a run) and held in a ContextVar, so concurrent batch workers with
+# different keys cannot see each other's pools.
+_run_pools: ContextVar[Optional[tuple]] = ContextVar("argus_run_pools", default=None)
+
+
+def _run_keys():
+    from core.provider_keys import current_keys
+
+    return current_keys()
+
+
+def _pools_for(keys) -> dict:
+    cached = _run_pools.get()
+    if cached is not None and cached[0] is keys:
+        return cached[1]
+
+    def build(values, label):
+        if not values:
+            return _EMPTY_POOL
+        return KeyPool([(v, f"user_{label}_{i + 1}") for i, v in enumerate(values)])
+
+    pools = {
+        "google": build(keys.google, "google"),
+        "openrouter": build(keys.openrouter, "openrouter"),
+        "groq": build(keys.groq, "groq"),
+    }
+    _run_pools.set((keys, pools))
+    return pools
+
+
+def _google_pool() -> KeyPool:
+    keys = _run_keys()
+    return _GOOGLE_POOL if keys is None else _pools_for(keys)["google"]
+
+
+def _openrouter_pool() -> KeyPool:
+    keys = _run_keys()
+    return _OPENROUTER_POOL if keys is None else _pools_for(keys)["openrouter"]
+
+
+def _groq_pool() -> KeyPool:
+    keys = _run_keys()
+    return _GROQ_POOL if keys is None else _pools_for(keys)["groq"]
+
+
+def _provider_secret(attr: str, env_var: str) -> str:
+    """A single-value credential: this run's, or the operator's from the env.
+
+    Note the asymmetry with the pools — it is deliberate. When a run brings keys,
+    an unsupplied provider returns "" rather than the env value.
+    """
+    keys = _run_keys()
+    if keys is None:
+        return os.getenv(env_var, "")
+    return getattr(keys, attr, "") or ""
+
+
+def _deepseek_key() -> str:
+    """Reads the module global rather than the env so a test that patches
+    _DEEPSEEK_KEY still works, matching how the rest of this module is tested."""
+    keys = _run_keys()
+    if keys is None:
+        return _DEEPSEEK_KEY
+    return keys.deepseek
 
 _github_tokens_configured = [
     t for t in (
@@ -383,7 +460,7 @@ def _groq_chat(
     max_tokens: int = 8000,
 ) -> Optional[str]:
     """Groq OpenAI-compatible chat endpoint — used as fallback after OpenRouter."""
-    key_state = _GROQ_POOL.next_available()
+    key_state = _groq_pool().next_available()
     if not key_state:
         return None
 
@@ -714,7 +791,7 @@ def _gemini_generate(model: str, prompt: str, role: str,
                      max_output_tokens: int = 8192,
                      temperature: float = 0.2,
                      json_mode: bool = False) -> Optional[str]:
-    key_state = _GOOGLE_POOL.next_available()
+    key_state = _google_pool().next_available()
     if not key_state:
         return None
 
@@ -872,7 +949,7 @@ def _nvidia_nim_generate_image(prompt: str) -> Optional[bytes]:
     NVIDIA_API_KEY (build.nvidia.com). Returns image bytes or None."""
     import base64
 
-    key = os.getenv("NVIDIA_API_KEY") or os.getenv("NVIDIA_NIM_API_KEY")
+    key = _provider_secret("nvidia", "NVIDIA_API_KEY") or _provider_secret("nvidia", "NVIDIA_NIM_API_KEY")
     if not key:
         logger.debug("[NIM] NVIDIA_API_KEY not set — skipping")
         return None
@@ -915,8 +992,8 @@ def _cloudflare_generate_image(prompt: str) -> Optional[bytes]:
     CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN. Returns image bytes or None."""
     import base64
 
-    account = os.getenv("CLOUDFLARE_ACCOUNT_ID")
-    token = os.getenv("CLOUDFLARE_API_TOKEN")
+    account = _provider_secret("cloudflare_account_id", "CLOUDFLARE_ACCOUNT_ID")
+    token = _provider_secret("cloudflare_api_token", "CLOUDFLARE_API_TOKEN")
     if not account or not token:
         logger.debug("[CF_AI] CLOUDFLARE_ACCOUNT_ID / CLOUDFLARE_API_TOKEN not set — skipping")
         return None
@@ -961,7 +1038,7 @@ def _gemini_generate_image(prompt: str) -> Optional[bytes]:
         "generationConfig": {"responseModalities": ["IMAGE", "TEXT"]},
     }
 
-    all_keys: list = [ks for ks in _GOOGLE_POOL._pool if ks.available]
+    all_keys: list = [ks for ks in _google_pool()._pool if ks.available]
 
     if not all_keys:
         logger.warning("[GEMINI_IMG] No Google API key available — falling back to Pollinations.ai")
@@ -1014,7 +1091,7 @@ def nim_edit_image(prompt: str, image_bytes: bytes) -> Optional[bytes]:
     import base64
     import io
 
-    key = os.getenv("NVIDIA_API_KEY") or os.getenv("NVIDIA_NIM_API_KEY")
+    key = _provider_secret("nvidia", "NVIDIA_API_KEY") or _provider_secret("nvidia", "NVIDIA_NIM_API_KEY")
     if not key:
         return None
     try:
@@ -1065,8 +1142,8 @@ def cloudflare_edit_image(prompt: str, image_bytes: bytes,
     the prompt drives the new surface. Takes the image INLINE (no asset upload,
     unlike NIM), returns the repainted PNG bytes directly. Needs free
     CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN."""
-    account = os.getenv("CLOUDFLARE_ACCOUNT_ID")
-    token = os.getenv("CLOUDFLARE_API_TOKEN")
+    account = _provider_secret("cloudflare_account_id", "CLOUDFLARE_ACCOUNT_ID")
+    token = _provider_secret("cloudflare_api_token", "CLOUDFLARE_API_TOKEN")
     if not account or not token:
         return None
     url = (f"https://api.cloudflare.com/client/v4/accounts/{account}"
@@ -1141,7 +1218,7 @@ def gemini_edit_image(prompt: str, image_bytes: bytes) -> Optional[bytes]:
         }],
         "generationConfig": {"responseModalities": ["IMAGE", "TEXT"]},
     }
-    for key_state in [ks for ks in _GOOGLE_POOL._pool if ks.available]:
+    for key_state in [ks for ks in _google_pool()._pool if ks.available]:
         for model_id in _GEMINI_IMAGE_MODELS:
             url = _GEMINI_BASE.format(model=model_id)
             try:
@@ -1183,7 +1260,7 @@ def _huggingface_generate_image(prompt: str) -> Optional[bytes]:
     Much more reliable than Pollinations — uses your own HF API key so no
     anonymous rate limits.
     """
-    hf_key = os.getenv("HF_API_KEY", "")
+    hf_key = _provider_secret("huggingface", "HF_API_KEY")
     if not hf_key:
         logger.warning("[HF_IMG] No HF_API_KEY — falling back to Pollinations")
         return _pollinations_generate_image(prompt)
@@ -1276,7 +1353,7 @@ def _gemini_generate_code(prompt: str, role: str = "code_gen") -> Optional[str]:
     _code_models = (["gemini-2.5-pro"] if _USE_PRO else []) + [m for m in GEMINI_CODE_MODELS if "pro" not in m]
     _attempt_idx = 0
     for model in _code_models:
-        for key_state in [ks for ks in _GOOGLE_POOL._pool if ks.available]:
+        for key_state in [ks for ks in _google_pool()._pool if ks.available]:
             url = _GEMINI_BASE.format(model=model)
             gen_cfg = {
                 "temperature": 0.15,
@@ -1347,7 +1424,7 @@ def _gemini_generate_multimodal(
     """Gemini generateContent call with text + one or more inline images.
     image_bytes may be a single bytes blob or a list of them (in order)."""
     import base64
-    key_state = _GOOGLE_POOL.next_available()
+    key_state = _google_pool().next_available()
     if not key_state:
         return None
 
@@ -1429,7 +1506,7 @@ def _gemini_multimodal_code(
 
     _models = (["gemini-2.5-pro"] if _USE_PRO else []) + ["gemini-2.5-flash", "gemini-2.5-flash-lite"]
     for model in _models:
-        key_state = _GOOGLE_POOL.next_available()
+        key_state = _google_pool().next_available()
         if not key_state:
             return None
         url = _GEMINI_BASE.format(model=model)
@@ -1531,9 +1608,9 @@ def _deepseek_chat(
     max_tokens: int = 16000,
 ) -> Optional[str]:
     """DeepSeek API — OpenAI-compatible, excellent coder, free credits."""
-    if not _DEEPSEEK_KEY:
+    if not _deepseek_key():
         return None
-    headers = {"Authorization": f"Bearer {_DEEPSEEK_KEY}",
+    headers = {"Authorization": f"Bearer {_deepseek_key()}",
                "Content-Type": "application/json"}
     payload = {"model": model, "messages": messages,
                "temperature": temperature, "max_tokens": max_tokens}
@@ -1622,7 +1699,7 @@ def _openrouter_chat(
     temperature: float = 0.2,
     max_tokens: int = 4096,
 ) -> Optional[str]:
-    key_state = _OPENROUTER_POOL.next_available()
+    key_state = _openrouter_pool().next_available()
     if not key_state:
         return None
 
@@ -1691,8 +1768,8 @@ def _openrouter_chat(
 
 def key_pool_status() -> dict:
     return {
-        "google": _GOOGLE_POOL.report(),
-        "openrouter": _OPENROUTER_POOL.report(),
+        "google": _google_pool().report(),
+        "openrouter": _openrouter_pool().report(),
     }
 
 
@@ -2581,7 +2658,7 @@ def generate_blender_script(
                 if valid:
                     logger.info("[SCRIPT_GEN] Vision+grounded OK via github/%s", _gh_m)
                     return code
-            if _DEEPSEEK_KEY:
+            if _deepseek_key():
                 for _ds_m in DEEPSEEK_MODELS:
                     raw = _deepseek_chat(_ds_m, grounded_messages, "generation_grounded",
                                         temperature=0.15, max_tokens=20000)
@@ -2657,7 +2734,7 @@ def generate_blender_script(
             return code
         logger.warning("[SCRIPT_GEN] github/%s failed validation: %s", _gh_model, reason[:60])
 
-    if _DEEPSEEK_KEY:
+    if _deepseek_key():
         for _ds_model in DEEPSEEK_MODELS:
             raw = _deepseek_chat(_ds_model, _gh_messages, "generation",
                                  temperature=0.15, max_tokens=20000)
@@ -2824,7 +2901,7 @@ def critique_blender_script(script: str, user_prompt: str, part_data: Optional[d
             parsed.setdefault("summary", "Critic completed.")
             parsed.setdefault("issues", [])
             return parsed
-    if _DEEPSEEK_KEY:
+    if _deepseek_key():
         raw = _deepseek_chat("deepseek-chat", messages, "critic", temperature=0.1, max_tokens=3000)
         if raw:
             parsed = _extract_json(raw)
@@ -3196,7 +3273,7 @@ Script:
         if valid:
             logger.info("[REPAIR] github/%s succeeded", _gh_m)
             return repaired
-    if _DEEPSEEK_KEY:
+    if _deepseek_key():
         for _ds_m in DEEPSEEK_MODELS:
             raw = _deepseek_chat(_ds_m, _repair_gh_messages, "repair",
                                  temperature=0.0, max_tokens=20000)
@@ -3524,7 +3601,7 @@ def generate_visual_repair(
         if valid:
             logger.info("[VISUAL_REPAIR] github/%s text fix succeeded", _gh_m)
             return improved
-    if _DEEPSEEK_KEY:
+    if _deepseek_key():
         raw = _deepseek_chat("deepseek-coder", _vr_messages, "visual_repair",
                              temperature=0.2, max_tokens=20000)
         if raw:
@@ -3777,7 +3854,7 @@ def generate_fresh_from_critique(
 
 def generate_3d_from_image(image_bytes: bytes) -> "Optional[bytes]":
     """Try HuggingFace image-to-3D models and return GLB bytes, or None."""
-    hf_key = os.getenv("HF_API_KEY", "")
+    hf_key = _provider_secret("huggingface", "HF_API_KEY")
     if not hf_key or not image_bytes:
         return None
 

@@ -16,6 +16,7 @@
 
 const LS_BASE = "argus.apiBase";
 const LS_TOKEN = "argus.apiToken";
+const LS_PROVIDER_KEYS = "argus.providerKeys";
 
 /** Baked in at build time for Pages deploys (VITE_ARGUS_API_BASE); ignored when
  *  the user has configured a URL by hand. */
@@ -73,4 +74,84 @@ export function isConfigured(): boolean {
 export function clearConfig(): void {
   write(LS_BASE, "");
   write(LS_TOKEN, "");
+  write(LS_PROVIDER_KEYS, "");
+}
+
+/* -------------------------------------------------------------------------
+ * Provider keys (bring your own key)
+ *
+ * These are the user's own LLM credentials, not the ARGUS backend token, and
+ * they are handled differently on purpose: they stay in this browser and ride
+ * with each generate request in the POST body. Nothing about them is written on
+ * the server, so a shared backend never accumulates other people's credentials.
+ *
+ * Gemini takes several keys because core/llm.py pools and rotates them on rate
+ * limits — the same quota-spreading the operator's .env pool gets.
+ * ----------------------------------------------------------------------- */
+
+export interface ProviderKeys {
+  google: string[];
+  groq: string[];
+  openrouter: string[];
+  deepseek: string;
+  huggingface: string;
+  nvidia: string;
+  cloudflare_account_id: string;
+  cloudflare_api_token: string;
+}
+
+export const EMPTY_PROVIDER_KEYS: ProviderKeys = {
+  google: [],
+  groq: [],
+  openrouter: [],
+  deepseek: "",
+  huggingface: "",
+  nvidia: "",
+  cloudflare_account_id: "",
+  cloudflare_api_token: "",
+};
+
+export function getProviderKeys(): ProviderKeys {
+  const raw = read(LS_PROVIDER_KEYS);
+  if (!raw) return { ...EMPTY_PROVIDER_KEYS };
+  try {
+    // Spread over the empty shape so a payload written by an older build (or a
+    // hand-edited entry) can't leave a field undefined and break the request.
+    return { ...EMPTY_PROVIDER_KEYS, ...JSON.parse(raw) };
+  } catch {
+    return { ...EMPTY_PROVIDER_KEYS };
+  }
+}
+
+export function setProviderKeys(keys: ProviderKeys): void {
+  write(LS_PROVIDER_KEYS, hasAnyProviderKey(keys) ? JSON.stringify(keys) : "");
+}
+
+export function hasAnyProviderKey(keys: ProviderKeys): boolean {
+  return (
+    keys.google.length > 0 ||
+    keys.groq.length > 0 ||
+    keys.openrouter.length > 0 ||
+    Boolean(
+      keys.deepseek ||
+        keys.huggingface ||
+        keys.nvidia ||
+        (keys.cloudflare_account_id && keys.cloudflare_api_token),
+    )
+  );
+}
+
+/** Which providers a run with these keys could actually use. Mirrors
+ *  ProviderKeys.providers() on the backend, and is what the UI shows so the
+ *  "only the models you supplied" rule is visible rather than implied. */
+export function activeProviders(keys: ProviderKeys): string[] {
+  const on: string[] = [];
+  if (keys.google.length) on.push("Gemini");
+  if (keys.groq.length) on.push("Groq");
+  if (keys.openrouter.length) on.push("OpenRouter");
+  if (keys.deepseek) on.push("DeepSeek");
+  if (keys.huggingface) on.push("HuggingFace");
+  if (keys.nvidia) on.push("NVIDIA");
+  if (keys.cloudflare_account_id && keys.cloudflare_api_token) on.push("Cloudflare");
+  return on;
 }

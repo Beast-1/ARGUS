@@ -154,6 +154,17 @@ logging.basicConfig(
     ],
 )
 
+# Wrap the two handlers above so every logger's output is redacted on its way to
+# stdout and logs/argus.log — not just core/llm.py's. The previous filter was
+# attached to the ARGUS.llm logger alone, and a logging.Filter on one logger never
+# sees records emitted through its siblings, so ARGUS.blender, ARGUS.run_manager
+# and the rest were writing to that file unfiltered. Handler-level also catches
+# tracebacks, which are rendered from exc_info at format time and so are invisible
+# to any filter.
+from core.secrets import install_redaction  # noqa: E402
+
+install_redaction()
+
 logger = logging.getLogger("ARGUS")
 
 

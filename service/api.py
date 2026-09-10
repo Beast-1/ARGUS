@@ -11,6 +11,10 @@ import mimetypes
 import os
 import queue
 from contextlib import asynccontextmanager
+from typing import TYPE_CHECKING, Optional
+
+if TYPE_CHECKING:  # annotation only; core is imported lazily inside the helper
+    from core.provider_keys import ProviderKeys
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -128,13 +132,58 @@ def delete_project(name: str) -> dict:
     return {"ok": True, "message": message}
 
 
+def _provider_keys_from(payload) -> Optional["ProviderKeys"]:
+    """Unwrap the SecretStr wire model into the domain object.
+
+    This is the single place .get_secret_value() is called. Everywhere else the
+    keys stay wrapped (in transit) or live behind ProviderKeys' counting repr
+    (in the pipeline), so there is exactly one line to audit.
+    """
+    from core.provider_keys import ProviderKeys
+
+    if payload is None:
+        return None
+
+    def one(v) -> str:
+        return v.get_secret_value().strip() if v else ""
+
+    def many(vs) -> tuple:
+        return tuple(s for s in (one(v) for v in (vs or [])) if s)
+
+    keys = ProviderKeys(
+        google=many(payload.google),
+        groq=many(payload.groq),
+        openrouter=many(payload.openrouter),
+        deepseek=one(payload.deepseek),
+        huggingface=one(payload.huggingface),
+        nvidia=one(payload.nvidia),
+        cloudflare_account_id=one(payload.cloudflare_account_id),
+        cloudflare_api_token=one(payload.cloudflare_api_token),
+    )
+    # An object with every field blank would gate every provider off and produce
+    # a run that can do nothing. Treat it as "no keys supplied" instead.
+    return keys if keys.any_present() else None
+
+
 @app.post("/api/generate", status_code=202, dependencies=_AUTH)
 def start_generation(req: GenerateRequest) -> dict:
+    provider_keys = _provider_keys_from(req.provider_keys)
+
+    # Set on a publicly reachable deployment so a visitor cannot fall through to
+    # the operator's own credentials. Off by default, which preserves the local
+    # desktop and CLI behaviour of using .env.
+    if provider_keys is None and os.getenv("ARGUS_REQUIRE_USER_KEYS", "0") == "1":
+        raise HTTPException(
+            status_code=400,
+            detail="This server requires your own API key. Add one in Settings, then try again.",
+        )
+
     started = run_manager.start(
         prompt=req.prompt,
         poly_budget=req.poly_budget,
         mcp_mode=req.mcp_mode,
         use_concept_pipeline=req.use_concept_pipeline,
+        provider_keys=provider_keys,
     )
     if not started:
         raise HTTPException(status_code=409, detail="A generation is already running.")

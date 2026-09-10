@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { apiPost } from "../../api/client";
+import { ApiError, apiPost } from "../../api/client";
+import { activeProviders, getProviderKeys, hasAnyProviderKey } from "../../api/config";
 import { useEventStream } from "../../api/useEventStream";
 import { useProjects } from "../../api/useProjects";
 import { Icon, Icons } from "../../components/Icon";
+import { KeyVault } from "../../components/KeyVault";
 import { Logo } from "../../components/Logo";
 import type { Route } from "../../routes";
 import { ApprovalDialog } from "./ApprovalDialog";
@@ -51,6 +53,12 @@ export function Workbench({ onNavigate, onOpenProject }: WorkbenchProps) {
   const [approvalPending, setApprovalPending] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [now, setNow] = useState(Date.now());
+  const [vaultOpen, setVaultOpen] = useState(false);
+  // Provider count, not the keys themselves — the menubar only needs to say
+  // whether the user is set up to build.
+  const [providerCount, setProviderCount] = useState(
+    () => activeProviders(getProviderKeys()).length,
+  );
   const logRef = useRef<HTMLDivElement | null>(null);
 
   const busy = run.status === "running" || run.status === "awaiting_approval";
@@ -95,12 +103,24 @@ export function Workbench({ onNavigate, onOpenProject }: WorkbenchProps) {
   }) {
     setError(null);
     try {
-      await apiPost("/api/generate", req);
+      // The user's own credentials ride in the body, never the query string, and
+      // are read fresh each time so a key edited mid-session takes effect on the
+      // next build. Omitted entirely when empty, which is what lets the desktop
+      // build keep using the operator's .env.
+      const keys = getProviderKeys();
+      await apiPost("/api/generate", {
+        ...req,
+        provider_keys: hasAnyProviderKey(keys) ? keys : undefined,
+      });
     } catch (err) {
+      // Match on the status, not the message text: the message is now the
+      // backend's own `detail` string, so the old substring check for "409"
+      // stopped matching the moment those details started coming through.
+      const e = err as ApiError;
       setError(
-        (err as Error).message.includes("409")
+        e.status === 409
           ? "A generation is already running."
-          : `Couldn't start: ${(err as Error).message}`,
+          : `Couldn't start: ${e.message}`,
       );
     }
   }
@@ -139,6 +159,14 @@ export function Workbench({ onNavigate, onOpenProject }: WorkbenchProps) {
           Dashboard
         </div>
         <div className="wb-fill" />
+        <button
+          className={`wb-menu-item wb-keys${providerCount === 0 ? " wb-keys-empty" : ""}`}
+          onClick={() => setVaultOpen(true)}
+          title="Provider keys used for your builds"
+        >
+          <Icon icon={Icons.key} size={13} />
+          {providerCount === 0 ? "Add API keys" : `${providerCount} provider${providerCount > 1 ? "s" : ""}`}
+        </button>
         <div className="wb-path">
           {run.completed?.run_id ?? run.metrics["Asset name"] ?? "no active run"}
         </div>
@@ -205,6 +233,13 @@ export function Workbench({ onNavigate, onOpenProject }: WorkbenchProps) {
           <span>{elapsedLabel(run.startedAt, now)}</span>
         </div>
       </div>
+
+      {vaultOpen && (
+        <KeyVault
+          onClose={() => setVaultOpen(false)}
+          onSaved={(keys) => setProviderCount(activeProviders(keys).length)}
+        />
+      )}
 
       {run.approval && (
         <ApprovalDialog

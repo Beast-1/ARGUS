@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, SecretStr
 
 
 class ProjectFile(BaseModel):
@@ -43,11 +43,38 @@ class ProjectListResponse(BaseModel):
     count: int
 
 
+class ProviderKeyPayload(BaseModel):
+    """Credentials a browser client supplies for its own run.
+
+    Every field is SecretStr, whose repr is "**********" — so a validation error,
+    a logged request model or an accidental model_dump() cannot echo a key. Read
+    the real value with .get_secret_value(), which happens in exactly one place
+    (service/run_manager.py, when the run's key scope is opened).
+
+    Google, Groq and OpenRouter are lists because core/llm.py pools those and
+    rotates on rate limits; a user with several Gemini keys gets the same
+    quota-spreading the operator's .env pool provides.
+    """
+
+    google: list[SecretStr] = []
+    groq: list[SecretStr] = []
+    openrouter: list[SecretStr] = []
+    deepseek: Optional[SecretStr] = None
+    huggingface: Optional[SecretStr] = None
+    nvidia: Optional[SecretStr] = None
+    cloudflare_account_id: Optional[SecretStr] = None
+    cloudflare_api_token: Optional[SecretStr] = None
+
+
 class GenerateRequest(BaseModel):
     prompt: str
     poly_budget: Optional[str] = None
     mcp_mode: bool = False
     use_concept_pipeline: bool = True
+    # Absent for the desktop/CLI case, where the operator's .env supplies the
+    # keys. Present when a browser client brings its own, in which case the run
+    # uses exactly these providers and never falls back to the operator's.
+    provider_keys: Optional[ProviderKeyPayload] = None
 
 
 class MemoryApprovalRequest(BaseModel):

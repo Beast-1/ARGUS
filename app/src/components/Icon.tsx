@@ -10,6 +10,7 @@ import {
   Gauge,
   Grid3x3,
   Image,
+  KeyRound,
   Orbit,
   Palette,
   Shapes,
@@ -51,4 +52,5 @@ export const Icons = {
   viewRender: Image,
   viewModel: Orbit,
   viewWireframe: Grid3x3,
+  key: KeyRound,
 } as const;

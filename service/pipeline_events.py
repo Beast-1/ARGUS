@@ -15,6 +15,8 @@ import json
 import re
 from typing import Callable, Optional
 
+from core.secrets import redact
+
 __all__ = ["PipelineEventWriter", "STAGE_LABELS", "score_kind"]
 
 EmitFn = Callable[[str, dict], None]
@@ -114,7 +116,13 @@ class PipelineEventWriter:
 
     # -- parsing -------------------------------------------------------
     def _handle_line(self, raw: str) -> None:
-        line = raw.rstrip()
+        # Redact before anything else touches the line. This is the widest exit
+        # the pipeline has: every line of stdout/stderr is forwarded verbatim to
+        # the browser below, and on a tunnelled deployment that browser is on the
+        # public internet. Logging never reaches this writer (main.py binds its
+        # StreamHandler to the real sys.stdout before the redirect), so the
+        # logging-side redaction provably does not cover this path.
+        line = redact(raw.rstrip())
         # Nothing is silently dropped: every line also reaches the raw console pane.
         self._emit("log_line", {"text": line})
 

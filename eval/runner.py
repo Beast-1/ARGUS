@@ -36,6 +36,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from eval import metrics as metrics_mod  # noqa: E402
 from eval.conditions import CONDITIONS, env_for, flags_for  # noqa: E402
 
+from core.secrets import redact
+
 REPO = Path(__file__).resolve().parents[1]
 BENCHMARK = Path(__file__).with_name("benchmark.jsonl")
 RESULTS_DIR = REPO / "eval" / "results"
@@ -158,7 +160,9 @@ def run_cell(item: dict, condition: str, out_root: Path, timeout: int,
     if log_dir is not None:
         log_dir.mkdir(parents=True, exist_ok=True)
         log_path = log_dir / f"{condition}__{item['id']}.log"
-        log_path.write_text(full_log, encoding="utf-8", errors="replace")
+        # These files are committed to the repository, so a key reaching one
+        # is published rather than merely written down.
+        log_path.write_text(redact(full_log), encoding="utf-8", errors="replace")
 
     log_tail = full_log[-4000:]
 

@@ -15,7 +15,10 @@ import threading
 import time
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
+
+if TYPE_CHECKING:  # import only for annotations — main/core are imported lazily here
+    from core.provider_keys import ProviderKeys
 
 from service.pipeline_events import PipelineEventWriter
 from service.projects import OUTPUT_ROOT
@@ -83,6 +86,10 @@ class RunManager:
         # thread in start(), adopted by the worker thread in _run(), signalled
         # from whichever thread calls request_cancel().
         self._cancel_scope: Optional[threading.Event] = None
+        # The current run's own provider credentials, or None to use the
+        # operator's .env keys. Never persisted — snapshot() must not learn
+        # about this field, or the keys would reach out/.run_state.json.
+        self._provider_keys: Optional["ProviderKeys"] = None
         self._approval_decision: bool = False
         self._approval_context: Optional[dict] = None
 
@@ -163,6 +170,7 @@ class RunManager:
         poly_budget: Optional[str] = None,
         mcp_mode: bool = False,
         use_concept_pipeline: bool = True,
+        provider_keys: Optional["ProviderKeys"] = None,
     ) -> bool:
         """Returns False if a generation is already in flight."""
         if not self._lock.acquire(blocking=False):
@@ -183,6 +191,12 @@ class RunManager:
             # as its thread-current scope in _run().
             from core.cancel import new_scope
             self._cancel_scope = new_scope()
+
+            # A run's own credentials, opened here for the same reason as the
+            # cancel scope: created on the request thread, handed to the worker,
+            # adopted there. None means "use the operator's .env keys", which is
+            # the desktop and CLI path.
+            self._provider_keys = provider_keys
 
             with self._history_guard:
                 self._history = []
@@ -218,6 +232,19 @@ class RunManager:
         if self._cancel_scope is not None:
             from core.cancel import adopt_scope
             adopt_scope(self._cancel_scope)
+
+        # Same reasoning for the run's credentials: without adopting them here
+        # core/llm.py would fall back to the operator's .env pools and silently
+        # spend their quota, which is the exact outcome BYOK exists to prevent.
+        # Registering the literal values with the redactor is what keeps them out
+        # of logs/argus.log, the SSE stream and the eval artifacts.
+        run_secrets: list[str] = []
+        if self._provider_keys is not None:
+            from core.provider_keys import adopt_keys
+            from core.secrets import register_run_secrets
+            adopt_keys(self._provider_keys)
+            run_secrets = self._provider_keys.secret_values()
+            register_run_secrets(run_secrets)
         self.emit("run_started", {
             "prompt": prompt,
             "poly_budget": poly_budget,
@@ -291,10 +318,23 @@ class RunManager:
         except Exception as exc:  # noqa: BLE001 — surface it, never kill the service
             with self._state_guard:
                 self.status = ERROR
-            self.emit("error", {"message": f"{type(exc).__name__}: {exc}"})
+            # Exception text routinely carries the failing request's URL and
+            # sometimes the provider's error envelope, so redact before this
+            # crosses to the browser.
+            from core.secrets import redact
+            self.emit("error", {"message": redact(f"{type(exc).__name__}: {exc}")})
         finally:
             self._approval_event = None
             self._approval_context = None
+            # Drop the run's credentials from this thread's context and from the
+            # redactor. Clearing the specific values rather than the whole
+            # registry leaves any other run's secrets registered.
+            if self._provider_keys is not None:
+                from core.provider_keys import clear_keys
+                from core.secrets import clear_run_secrets
+                clear_keys()
+                clear_run_secrets(run_secrets)
+                self._provider_keys = None
             self._persist_state()
             self._lock.release()
 

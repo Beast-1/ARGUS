@@ -158,6 +158,11 @@ SETTINGS: tuple[Setting, ...] = (
     _s("ARGUS_API_TOKEN", None, "service",
        "Bearer token the desktop UI must send. Generated per launch by "
        "run_app.bat and inherited by both processes.", secret=True),
+    _s("ARGUS_REQUIRE_USER_KEYS", "0", "service",
+       "Set to 1 to reject generation requests that don't carry the caller's own "
+       "provider keys. Off by default so the desktop app and CLI keep using .env; "
+       "turn it on for any publicly reachable deployment, or a visitor falls "
+       "through to the operator's credentials and spends their quota."),
     _s("ARGUS_ALLOWED_ORIGINS", "", "service",
        "Comma-separated extra CORS origins, for serving the UI from somewhere "
        "other than the desktop shell (e.g. https://argus.pages.dev). The "

@@ -24,6 +24,13 @@ _CALL = re.compile(
     r"""os\.(?:getenv|environ\.get)\(\s*["']([A-Za-z0-9_]+)["']\s*(?:,\s*("[^"]*"|'[^']*'))?"""
 )
 
+# BYOK routes single-value provider credentials through
+# core/llm.py:_provider_secret("<attr>", "<ENV_VAR>"), which prefers the running
+# request's own key and falls back to the environment. The env var is still read
+# — it is just no longer inside an os.getenv() call, so the scan above cannot see
+# it. Counting these keeps the drift check honest instead of exempting them.
+_INDIRECT_CALL = re.compile(r"""_provider_secret\(\s*["'][A-Za-z0-9_]+["']\s*,\s*["']([A-Za-z0-9_]+)["']""")
+
 # Pool members (GOOGLE_API_KEY_2 .. _10) are built by f-string, and the retired
 # GitHub Models tokens are read only to warn that they're ignored — neither is a
 # separate knob, so neither needs its own registry entry.
@@ -49,11 +56,12 @@ def _reads_in_source() -> dict[str, set[str]]:
     """{env var name: {files that read it}} across the shipped code."""
     found: dict[str, set[str]] = {}
     for rel, text in _source_files():
-        for match in _CALL.finditer(text):
-            name = match.group(1)
-            if _EXEMPT.match(name):
-                continue
-            found.setdefault(name, set()).add(rel)
+        for pattern in (_CALL, _INDIRECT_CALL):
+            for match in pattern.finditer(text):
+                name = match.group(1)
+                if _EXEMPT.match(name):
+                    continue
+                found.setdefault(name, set()).add(rel)
     return found
 
 
