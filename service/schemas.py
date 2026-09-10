@@ -52,10 +52,3 @@ class GenerateRequest(BaseModel):
 
 class MemoryApprovalRequest(BaseModel):
     approved: bool
-
-
-class GenerateStatus(BaseModel):
-    status: str  # idle|running|awaiting_approval|complete|failed|rejected|error|cancelled
-    run_id: Optional[str] = None
-    asset_name: Optional[str] = None
-    prompt: Optional[str] = None

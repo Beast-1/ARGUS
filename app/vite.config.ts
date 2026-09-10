@@ -8,6 +8,11 @@ const host = process.env.TAURI_DEV_HOST;
 export default defineConfig(async () => ({
   plugins: [react()],
 
+  // Default 'node' environment is enough for now — the only tests are the pure
+  // useEventStream reducer, which needs no DOM. Add jsdom if a future test
+  // renders a component.
+  test: {},
+
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //
   // 1. prevent Vite from obscuring rust errors

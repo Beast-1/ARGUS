@@ -1,0 +1,15 @@
+# Cloudflare Pages response headers.
+#
+# connect-src is intentionally broad: the backend URL is whatever tunnel the user
+# configures at runtime, so it cannot be pinned at build time. Everything else is
+# locked down — in particular script-src 'self', which is what keeps a stored API
+# token out of reach of injected script.
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: http://127.0.0.1:8420 http://localhost:8420; media-src 'self' blob: https: http://127.0.0.1:8420 http://localhost:8420; connect-src 'self' https: http://127.0.0.1:8420 http://localhost:8420; font-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  X-Frame-Options: DENY
+  Permissions-Policy: geolocation=(), microphone=(), camera=()
+
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

@@ -20,7 +20,7 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": "default-src 'self'; connect-src 'self' http://127.0.0.1:8420; img-src 'self' data: blob: http://127.0.0.1:8420; media-src 'self' blob: http://127.0.0.1:8420; style-src 'self' 'unsafe-inline'; script-src 'self'"
     }
   },
   "bundle": {

@@ -8,27 +8,66 @@ from __future__ import annotations
 import asyncio
 import json
 import mimetypes
+import os
 import queue
+from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 
 from service import projects
+from service.auth import require_token
 from service.run_manager import run_manager
 from service.schemas import (
     GenerateRequest,
-    GenerateStatus,
     MemoryApprovalRequest,
     ProjectDetail,
     ProjectListResponse,
 )
 
-app = FastAPI(title="ARGUS API")
+_AUTH = [Depends(require_token)]
+
+@asynccontextmanager
+async def _lifespan(_app: FastAPI):
+    """Print the API token once, on the operator's own console.
+
+    The desktop flow never needed this — run_app.bat puts the token in an env
+    var both processes inherit, so the Tauri shell hands it to the frontend
+    invisibly. A browser has no shared environment, so whoever opens the hosted
+    UI has to type the token in, and until this existed there was no way to find
+    out what it was.
+
+    stdout rather than the logger on purpose: this is a one-time startup notice
+    to a terminal, not something that should accumulate in logs/argus.log. A
+    startup hook rather than module scope so importing the app in tests doesn't
+    print it.
+    """
+    from service.auth import API_TOKEN
+    print(f"\n  ARGUS API token: {API_TOKEN}")
+    print("  (needed once by the browser UI; the desktop app picks it up automatically)\n")
+    yield
+
+
+app = FastAPI(title="ARGUS API", lifespan=_lifespan)
+
+# Desktop origins are fixed; the hosted frontend's is not, so it's configured.
+# Deliberately an explicit allowlist rather than "*": every /api/* route already
+# requires a bearer token, but a wildcard would let any page a browser happens to
+# load read responses from a backend reachable at that origin, and a tunnelled
+# backend is reachable from anywhere.
+_CORS_ORIGINS = [
+    "http://localhost:1420",       # vite dev
+    "tauri://localhost",           # desktop build
+    "http://tauri.localhost",      # desktop build (windows webview2)
+]
+_extra_origins = os.getenv("ARGUS_ALLOWED_ORIGINS", "")
+if _extra_origins:
+    _CORS_ORIGINS += [o.strip().rstrip("/") for o in _extra_origins.split(",") if o.strip()]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:1420", "tauri://localhost", "http://tauri.localhost"],
+    allow_origins=_CORS_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -43,13 +82,13 @@ def health() -> dict:
     return {"status": "ok"}
 
 
-@app.get("/api/projects", response_model=ProjectListResponse)
+@app.get("/api/projects", response_model=ProjectListResponse, dependencies=_AUTH)
 def get_projects() -> ProjectListResponse:
     items = projects.list_projects()
     return ProjectListResponse(projects=items, count=len(items))
 
 
-@app.get("/api/projects/{name}", response_model=ProjectDetail)
+@app.get("/api/projects/{name}", response_model=ProjectDetail, dependencies=_AUTH)
 def get_project(name: str) -> ProjectDetail:
     detail = projects.get_project_detail(name)
     if detail is None:
@@ -57,7 +96,7 @@ def get_project(name: str) -> ProjectDetail:
     return detail
 
 
-@app.get("/api/projects/{name}/files/{filename}")
+@app.get("/api/projects/{name}/files/{filename}", dependencies=_AUTH)
 def get_project_file(name: str, filename: str) -> FileResponse:
     path = projects.resolve_project_file(name, filename)
     if path is None:
@@ -65,7 +104,7 @@ def get_project_file(name: str, filename: str) -> FileResponse:
     return FileResponse(path)
 
 
-@app.post("/api/projects/{name}/open-in-blender")
+@app.post("/api/projects/{name}/open-in-blender", dependencies=_AUTH)
 def open_project_in_blender(name: str) -> dict:
     ok, message = projects.open_in_blender(name)
     if not ok:
@@ -73,7 +112,7 @@ def open_project_in_blender(name: str) -> dict:
     return {"ok": True, "message": message}
 
 
-@app.post("/api/projects/{name}/open-folder")
+@app.post("/api/projects/{name}/open-folder", dependencies=_AUTH)
 def open_project_folder(name: str) -> dict:
     ok, message = projects.open_folder(name)
     if not ok:
@@ -81,7 +120,7 @@ def open_project_folder(name: str) -> dict:
     return {"ok": True, "message": message}
 
 
-@app.delete("/api/projects/{name}")
+@app.delete("/api/projects/{name}", dependencies=_AUTH)
 def delete_project(name: str) -> dict:
     ok, message = projects.delete_project(name)
     if not ok:
@@ -89,7 +128,7 @@ def delete_project(name: str) -> dict:
     return {"ok": True, "message": message}
 
 
-@app.post("/api/generate", status_code=202)
+@app.post("/api/generate", status_code=202, dependencies=_AUTH)
 def start_generation(req: GenerateRequest) -> dict:
     started = run_manager.start(
         prompt=req.prompt,
@@ -102,19 +141,14 @@ def start_generation(req: GenerateRequest) -> dict:
     return {"status": "started"}
 
 
-@app.get("/api/generate/status", response_model=GenerateStatus)
-def generation_status() -> GenerateStatus:
-    return GenerateStatus(**run_manager.snapshot())
-
-
-@app.post("/api/generate/memory-approval")
+@app.post("/api/generate/memory-approval", dependencies=_AUTH)
 def resolve_memory_approval(req: MemoryApprovalRequest) -> dict:
     if not run_manager.resolve_memory_approval(req.approved):
         raise HTTPException(status_code=409, detail="Nothing is awaiting approval.")
     return {"ok": True}
 
 
-@app.post("/api/generate/cancel")
+@app.post("/api/generate/cancel", dependencies=_AUTH)
 def cancel_generation() -> dict:
     if not run_manager.request_cancel():
         raise HTTPException(status_code=409, detail="Nothing is running.")
@@ -125,7 +159,7 @@ def _sse(event_type: str, payload: dict) -> str:
     return f"event: {event_type}\ndata: {json.dumps(payload)}\n\n"
 
 
-@app.get("/api/generate/stream")
+@app.get("/api/generate/stream", dependencies=_AUTH)
 async def generation_stream(request: Request) -> StreamingResponse:
     async def event_source():
         q, replay = run_manager.subscribe()

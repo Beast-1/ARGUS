@@ -12,10 +12,12 @@ import os
 import re
 import shutil
 import subprocess
+from collections import OrderedDict
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+from service.pipeline_events import score_kind
 from service.schemas import ProjectDetail, ProjectFile, ProjectSummary
 
 OUTPUT_ROOT = Path(os.getenv("ARGUS_OUTPUT_ROOT", "out")).resolve()
@@ -39,8 +41,11 @@ _FILE_SUFFIXES = [
     (".blend", "BLEND"),
 ]
 
-# (glb path, mtime_ns) -> (triangle_count, material_count)
-_stats_cache: dict[tuple[str, int], tuple[int, int]] = {}
+# (glb path, mtime_ns) -> (triangle_count, material_count). Bounded LRU: this is a
+# process-lifetime cache with no eviction otherwise, so viewing enough distinct
+# assets across a long-running backend process would leak memory slowly forever.
+_STATS_CACHE_MAX = 512
+_stats_cache: "OrderedDict[tuple[str, int], tuple[Optional[int], Optional[int]]]" = OrderedDict()
 
 
 def format_project_name(raw_name: str) -> str:
@@ -50,16 +55,6 @@ def format_project_name(raw_name: str) -> str:
     suffix = match.group(2) if match and match.group(2) else ""
     title = base.replace("_", " ").strip().title() or "Generated Asset"
     return f"{title} {suffix}".strip()
-
-
-def score_kind(score: Optional[int]) -> Optional[str]:
-    if score is None:
-        return None
-    if score >= 7:
-        return "ok"
-    if score >= 4:
-        return "run"
-    return "fail"
 
 
 def severity_color(severity: Optional[str]) -> str:
@@ -151,6 +146,7 @@ def _glb_stats(glb_path: Path) -> tuple[Optional[int], Optional[int]]:
     cache_key = (str(glb_path), mtime_ns)
     cached = _stats_cache.get(cache_key)
     if cached is not None:
+        _stats_cache.move_to_end(cache_key)
         return cached
 
     try:
@@ -172,6 +168,9 @@ def _glb_stats(glb_path: Path) -> tuple[Optional[int], Optional[int]]:
         result = (None, None)
 
     _stats_cache[cache_key] = result
+    _stats_cache.move_to_end(cache_key)
+    if len(_stats_cache) > _STATS_CACHE_MAX:
+        _stats_cache.popitem(last=False)
     return result
 
 

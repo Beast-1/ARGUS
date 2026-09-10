@@ -9,6 +9,7 @@ IPC for no benefit at single-user scale.
 from __future__ import annotations
 
 import json
+import logging
 import queue
 import threading
 import time
@@ -17,6 +18,17 @@ from pathlib import Path
 from typing import Any, Optional
 
 from service.pipeline_events import PipelineEventWriter
+from service.projects import OUTPUT_ROOT
+
+logger = logging.getLogger("ARGUS.run_manager")
+
+# Bounds how much a single run's event history can grow — matches the 500-line
+# display cap the frontend already applies to log_line events (useEventStream.ts),
+# but here it protects the *source of truth*: without this, _history and every
+# subscriber's queue grow for the life of a long/chatty run with no cap at all.
+_MAX_HISTORY = 2000
+
+_STATE_FILE = OUTPUT_ROOT / ".run_state.json"
 
 
 def _manifest_score(glb_path: Optional[str]) -> Optional[int]:
@@ -56,6 +68,10 @@ class RunManager:
         self._subscribers_guard = threading.Lock()
         self._history: list[dict] = []
         self._history_guard = threading.Lock()
+        # Guards status/run_id/asset_name/prompt as one unit, so a concurrent
+        # snapshot() (e.g. from a status poll) can't observe a torn combination —
+        # e.g. a new run_id paired with the previous run's stale status.
+        self._state_guard = threading.Lock()
 
         self.status: str = IDLE
         self.run_id: Optional[str] = None
@@ -63,22 +79,69 @@ class RunManager:
         self.prompt: Optional[str] = None
 
         self._approval_event: Optional[threading.Event] = None
+        # The current run's cancel scope (core/cancel.py). Created on the request
+        # thread in start(), adopted by the worker thread in _run(), signalled
+        # from whichever thread calls request_cancel().
+        self._cancel_scope: Optional[threading.Event] = None
         self._approval_decision: bool = False
         self._approval_context: Optional[dict] = None
+
+        self._warn_if_state_file_shows_interrupted_run()
+
+    def _warn_if_state_file_shows_interrupted_run(self) -> None:
+        """A backend restart mid-run has nothing else to go on — the in-memory
+        RunManager is gone, and no run-history database exists. This doesn't
+        attempt recovery (out of scope), it just makes sure the interruption isn't
+        silent: whoever restarts the service can see what was in flight."""
+        try:
+            data = json.loads(_STATE_FILE.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return
+        if data.get("status") in (RUNNING, AWAITING_APPROVAL):
+            logger.warning(
+                "[RUN_MANAGER] Previous run appears to have been interrupted by a "
+                "backend restart: run_id=%s asset_name=%s prompt=%r status=%s",
+                data.get("run_id"), data.get("asset_name"), data.get("prompt"),
+                data.get("status"),
+            )
+
+    def _persist_state(self) -> None:
+        """Best-effort — losing this trace is preferable to a run failing because
+        disk I/O for a diagnostic file didn't succeed."""
+        try:
+            _STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+            tmp = _STATE_FILE.with_suffix(".tmp")
+            tmp.write_text(json.dumps(self.snapshot()), encoding="utf-8")
+            tmp.replace(_STATE_FILE)
+        except OSError:
+            pass
 
     # -- event plumbing -------------------------------------------------
     def emit(self, event_type: str, payload: dict) -> None:
         event = {"type": event_type, "payload": payload, "ts": time.time()}
         with self._history_guard:
             self._history.append(event)
+            if len(self._history) > _MAX_HISTORY:
+                # Keep the newest events — a reconnecting client cares about "what's
+                # happening now", not the start of a run it already saw once.
+                del self._history[: len(self._history) - _MAX_HISTORY]
         with self._subscribers_guard:
             for q in list(self._subscribers):
-                q.put(event)
+                try:
+                    # Bounded + non-blocking: a subscriber whose consumer has
+                    # stopped draining (e.g. a dropped connection request.is_
+                    # disconnected() hasn't caught yet) must never be able to
+                    # block emit() itself, which runs on the pipeline worker
+                    # thread — dropping the event for that one stalled
+                    # subscriber is the right trade, not stalling the run.
+                    q.put_nowait(event)
+                except queue.Full:
+                    pass
 
     def subscribe(self) -> tuple[queue.Queue, list[dict]]:
         """Returns a live queue plus the current run's events so far, so a client that
         connects mid-run (or reconnects) sees the whole run without Last-Event-ID logic."""
-        q: queue.Queue = queue.Queue()
+        q: queue.Queue = queue.Queue(maxsize=_MAX_HISTORY)
         with self._history_guard:
             replay = list(self._history)
         with self._subscribers_guard:
@@ -105,25 +168,40 @@ class RunManager:
         if not self._lock.acquire(blocking=False):
             return False
 
-        # The cancel flag is process-wide (main._CANCEL_EVENT) and outlives a run
-        # that finished normally — clear it before this one starts, or a prior
-        # cancelled run would make this new run appear cancelled from the outset.
-        from main import clear_cancel
-        clear_cancel()
+        # Everything from here until thread.start() must release the lock on any
+        # failure — it's only otherwise released in _run()'s finally, which never
+        # runs if we never reach the point of starting that thread. Before this
+        # fix, an exception here (e.g. the `from main import clear_cancel` below)
+        # left the lock held forever, permanently stuck reporting "a generation is
+        # already running" until the process was restarted.
+        try:
+            # Each run gets its own cancel scope (core/cancel.py). The scope is
+            # opened here rather than on the worker thread so request_cancel(),
+            # which arrives on a FastAPI request thread, has something to signal
+            # the moment the run exists — there is no window where a cancel would
+            # land on a scope that hasn't been created yet. The worker adopts it
+            # as its thread-current scope in _run().
+            from core.cancel import new_scope
+            self._cancel_scope = new_scope()
 
-        with self._history_guard:
-            self._history = []
-        self.status = RUNNING
-        self.run_id = None
-        self.asset_name = None
-        self.prompt = prompt
+            with self._history_guard:
+                self._history = []
+            with self._state_guard:
+                self.status = RUNNING
+                self.run_id = None
+                self.asset_name = None
+                self.prompt = prompt
+            self._persist_state()
 
-        thread = threading.Thread(
-            target=self._run,
-            args=(prompt, poly_budget, mcp_mode, use_concept_pipeline),
-            daemon=True,
-        )
-        thread.start()
+            thread = threading.Thread(
+                target=self._run,
+                args=(prompt, poly_budget, mcp_mode, use_concept_pipeline),
+                daemon=True,
+            )
+            thread.start()
+        except Exception:
+            self._lock.release()
+            raise
         return True
 
     def _run(
@@ -134,6 +212,12 @@ class RunManager:
         use_concept_pipeline: bool,
     ) -> None:
         writer = PipelineEventWriter(self.emit)
+        # A ContextVar set on the request thread isn't visible here, so adopt the
+        # scope start() created — otherwise this thread would check the
+        # process-wide fallback and never see the cancel.
+        if self._cancel_scope is not None:
+            from core.cancel import adopt_scope
+            adopt_scope(self._cancel_scope)
         self.emit("run_started", {
             "prompt": prompt,
             "poly_budget": poly_budget,
@@ -157,8 +241,9 @@ class RunManager:
                 )
             writer.flush()
 
-            self.run_id = writer.run_id
-            self.asset_name = writer.asset_name
+            with self._state_guard:
+                self.run_id = writer.run_id
+                self.asset_name = writer.asset_name
 
             # A cancelled run still goes through run_pipeline's normal completion
             # path (main.py's loops stop cooperatively at the next checkpoint,
@@ -166,13 +251,14 @@ class RunManager:
             # `success` alone can't tell "finished" from "stopped early because
             # you asked it to". Check the cancel flag to report the state you
             # actually asked for, while still surfacing whatever asset exists.
-            from main import is_cancelled
-            cancelled = is_cancelled()
+            from core.cancel import is_cancelled
+            cancelled = is_cancelled(self._cancel_scope)
 
             # Terminal state comes from the real return value, cross-checked against the
             # completion markers — the same belt-and-braces service/worker.py:115 uses.
             if cancelled and success and writer.final_asset:
-                self.status = CANCELLED
+                with self._state_guard:
+                    self.status = CANCELLED
                 self.emit("cancelled", {
                     "run_id": writer.run_id,
                     "asset_name": writer.asset_name,
@@ -181,13 +267,16 @@ class RunManager:
                     "visual_score": _manifest_score(writer.final_asset),
                 })
             elif cancelled:
-                self.status = CANCELLED
+                with self._state_guard:
+                    self.status = CANCELLED
                 self.emit("cancelled", {"reason": "Cancelled before an asset was produced"})
             elif success is None:
-                self.status = REJECTED
+                with self._state_guard:
+                    self.status = REJECTED
                 self.emit("rejected", {"reason": writer.rejection_reason or "Request rejected"})
             elif success and writer.final_asset:
-                self.status = COMPLETE
+                with self._state_guard:
+                    self.status = COMPLETE
                 self.emit("complete", {
                     "run_id": writer.run_id,
                     "asset_name": writer.asset_name,
@@ -196,14 +285,17 @@ class RunManager:
                     "visual_score": _manifest_score(writer.final_asset),
                 })
             else:
-                self.status = FAILED
+                with self._state_guard:
+                    self.status = FAILED
                 self.emit("failed", {"reason": "Pipeline reported failure"})
         except Exception as exc:  # noqa: BLE001 — surface it, never kill the service
-            self.status = ERROR
+            with self._state_guard:
+                self.status = ERROR
             self.emit("error", {"message": f"{type(exc).__name__}: {exc}"})
         finally:
             self._approval_event = None
             self._approval_context = None
+            self._persist_state()
             self._lock.release()
 
     # -- memory approval --------------------------------------------------
@@ -214,7 +306,9 @@ class RunManager:
         self._approval_event = event
         self._approval_decision = False
         self._approval_context = context
-        self.status = AWAITING_APPROVAL
+        with self._state_guard:
+            self.status = AWAITING_APPROVAL
+        self._persist_state()
 
         self.emit("memory_approval_pending", {
             "prompt": context.get("prompt"),
@@ -226,15 +320,22 @@ class RunManager:
         })
 
         event.wait()
-        self.status = RUNNING
+        with self._state_guard:
+            self.status = RUNNING
+        self._persist_state()
         return self._approval_decision
 
     def request_cancel(self) -> bool:
         """Returns False if there's nothing running to cancel."""
         if not self.is_busy():
             return False
-        from main import request_cancel as _request_cancel
-        _request_cancel()
+        # Signal this run's scope explicitly. request_cancel() with no argument
+        # would target *this* (HTTP request) thread's scope, which is the
+        # process-wide fallback — not the worker's — so the run would never see
+        # it. Passing the captured scope is what makes cancel cross the thread
+        # boundary.
+        from core.cancel import request_cancel as _request_cancel
+        _request_cancel(self._cancel_scope)
         self.emit("cancel_requested", {})
         # If the pipeline thread is currently blocked waiting on a memory-approval
         # decision, it can't reach the next _past_deadline() checkpoint until that
@@ -255,12 +356,13 @@ class RunManager:
         return True
 
     def snapshot(self) -> dict[str, Any]:
-        return {
-            "status": self.status,
-            "run_id": self.run_id,
-            "asset_name": self.asset_name,
-            "prompt": self.prompt,
-        }
+        with self._state_guard:
+            return {
+                "status": self.status,
+                "run_id": self.run_id,
+                "asset_name": self.asset_name,
+                "prompt": self.prompt,
+            }
 
 
 run_manager = RunManager()

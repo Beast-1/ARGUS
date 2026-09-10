@@ -15,6 +15,8 @@ import json
 import re
 from typing import Callable, Optional
 
+__all__ = ["PipelineEventWriter", "STAGE_LABELS", "score_kind"]
+
 EmitFn = Callable[[str, dict], None]
 
 # "\n[STAGE 55] Visual Feedback Loop"  (main.py:226-228, log_stage)
@@ -61,8 +63,13 @@ _METRIC_LABELS = {
 }
 
 
-def score_kind(score: int) -> str:
-    """Ported from desktop_app.py:968-974 so the frontend never re-implements thresholds."""
+def score_kind(score: Optional[int]) -> Optional[str]:
+    """Ported from desktop_app.py:968-974 so the frontend never re-implements
+    thresholds. The single canonical definition — service/projects.py imports this
+    rather than keeping its own copy, which had drifted into two independently
+    maintained but identical implementations."""
+    if score is None:
+        return None
     if score >= 7:
         return "ok"
     if score >= 4:

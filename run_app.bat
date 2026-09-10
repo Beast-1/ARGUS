@@ -25,6 +25,13 @@ if errorlevel 1 (
   goto :done
 )
 
+REM Shared secret between the backend and the Tauri frontend (service/auth.py /
+REM app/src-tauri/src/lib.rs's get_api_token). Generated once here so both the
+REM detached "ARGUS API" process and the Tauri dev process below inherit the exact
+REM same value; the backend would otherwise generate its own on first import and
+REM the frontend would never see it.
+for /f %%T in ('powershell -NoProfile -Command "[guid]::NewGuid().ToString(\"N\")"') do set "ARGUS_API_TOKEN=%%T"
+
 echo Starting ARGUS API on http://127.0.0.1:8420 ...
 start "ARGUS API" /min "%VENV_PY%" -m uvicorn service.api:app --host 127.0.0.1 --port 8420
 

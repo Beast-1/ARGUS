@@ -1,0 +1,3 @@
+# Cloudflare Pages SPA fallback. App.tsx routes in memory (no react-router), so
+# every path must serve index.html rather than 404.
+/*    /index.html   200
