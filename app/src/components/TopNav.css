@@ -3,9 +3,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 40px;
   border-bottom: 1px solid var(--line);
   position: relative;
+}
+
+/* The links are grouped so they centre as one unit on the page axis while the
+   brand sits out of flow at the left edge. */
+.top-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 40px;
 }
 
 .top-nav-brand {
@@ -40,4 +47,18 @@
 .top-nav a.current,
 .top-nav a:hover {
   color: var(--text);
+}
+
+/* The brand is taken out of flow so the links centre on the page axis, which
+   means nothing stops the two colliding once the window is narrow enough — and
+   they did, at 375px. Below this the bar becomes an ordinary flex row: brand
+   left, links right, no overlap possible. */
+@media (max-width: 560px) {
+  .top-nav {
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: 0 var(--space-5);
+  }
+  .top-nav-brand { position: static; }
+  .top-nav-links { display: flex; gap: var(--space-4); }
 }

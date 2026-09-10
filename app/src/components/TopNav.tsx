@@ -19,15 +19,17 @@ export function TopNav({ current, onNavigate }: TopNavProps) {
         <Logo />
         <b>ARGUS</b>
       </span>
-      {ITEMS.map((item) => (
-        <a
-          key={item.route}
-          className={item.route === current ? "current" : undefined}
-          onClick={() => onNavigate(item.route)}
-        >
-          {item.label}
-        </a>
-      ))}
+      <nav className="top-nav-links">
+        {ITEMS.map((item) => (
+          <a
+            key={item.route}
+            className={item.route === current ? "current" : undefined}
+            onClick={() => onNavigate(item.route)}
+          >
+            {item.label}
+          </a>
+        ))}
+      </nav>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import { apiFileUrl } from "../../api/client";
-import { ModelViewer } from "../../components/ModelViewer";
+import { LazyModelViewer } from "../../components/LazyModelViewer";
 import { useProject } from "../../api/useProjects";
 import { useProjectActions } from "../../api/useProjectActions";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
@@ -130,7 +130,7 @@ export function Reveal({ name, onNavigate }: RevealProps) {
               <p className="reveal-status">No render available</p>
             )
           ) : (
-            <ModelViewer src={glbFile?.url ?? null} wireframe={view === "wireframe"} />
+            <LazyModelViewer src={glbFile?.url ?? null} wireframe={view === "wireframe"} />
           )}
         </div>
       </div>

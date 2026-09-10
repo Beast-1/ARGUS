@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { apiFileUrl } from "../../api/client";
 import { Icon, Icons } from "../../components/Icon";
-import { ModelViewer } from "../../components/ModelViewer";
+import { LazyModelViewer } from "../../components/LazyModelViewer";
 import type { RunState } from "../../api/useEventStream";
 
 type ViewMode = "render" | "model" | "wireframe";
@@ -51,7 +51,7 @@ export function Viewport({ run, livePreviewUrl, glbUrl }: ViewportProps) {
       </div>
 
       {interactive ? (
-        <ModelViewer src={glbUrl} wireframe={mode === "wireframe"} />
+        <LazyModelViewer src={glbUrl} wireframe={mode === "wireframe"} />
       ) : (
         <>
           <span className="wb-bracket a" />

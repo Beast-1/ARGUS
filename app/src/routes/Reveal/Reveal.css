@@ -254,3 +254,16 @@
 .reveal-foot-danger:hover {
   color: var(--danger) !important;
 }
+
+/* ---- narrow screens ----
+   The hero's generous vertical rhythm is the point on a desktop; on a phone the
+   same values leave the plate stranded in dead space and push the spec strip
+   below two folds. These tighten the gaps without changing the composition. */
+@media (max-width: 640px) {
+  .reveal-hero { padding: var(--space-6) var(--space-5) 0; }
+  .reveal-eyebrow { font-size: 11px; margin-bottom: var(--space-3); }
+  .reveal-sub { margin-top: var(--space-4); font-size: 14px; }
+  .reveal-stage { min-height: 0; margin-top: var(--space-5); }
+  .reveal-cta { gap: var(--space-4); margin-bottom: var(--space-6); }
+  .reveal-foot { padding: var(--space-4) var(--space-5); }
+}

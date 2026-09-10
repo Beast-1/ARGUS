@@ -6,7 +6,7 @@ import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment
 import { apiFileUrl } from "../api/client";
 import "./ModelViewer.css";
 
-interface ModelViewerProps {
+export interface ModelViewerProps {
   /** API-relative GLB url, e.g. /api/projects/foo/files/foo.glb */
   src: string | null;
   wireframe: boolean;
@@ -175,3 +175,7 @@ export function ModelViewer({ src, wireframe }: ModelViewerProps) {
     </div>
   );
 }
+
+/** React.lazy() needs a default export. Consumers import LazyModelViewer, which
+ *  is what keeps three.js out of the initial bundle — see that file. */
+export default ModelViewer;
