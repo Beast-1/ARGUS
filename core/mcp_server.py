@@ -4,17 +4,34 @@ from __future__ import annotations
 import json
 import logging
 import os
+import secrets
 import socket
-import textwrap
 
 from dataclasses import dataclass, asdict, field
 from enum import Enum
+
+from core.script_safety import check_script_safety
 
 logger = logging.getLogger("ARGUS.MCP")
 
 MCP_HOST = os.getenv("ARGUS_MCP_HOST", os.getenv("BLENDER_HOST", "127.0.0.1"))
 MCP_PORT = int(os.getenv("ARGUS_MCP_PORT", "9876"))
-MCP_TIMEOUT = int(os.getenv("ARGUS_MCP_TIMEOUT", os.getenv("BLENDER_MCP_TIMEOUT", "180")))
+# BLENDER_MCP_TIMEOUT is honoured as a legacy alias, but it must not carry its
+# own default here: core/blender.py:30 already defaults that same variable to
+# 120 for the headless topology pass, so declaring 180 for it here meant one
+# unset variable silently meant two different things depending on which path
+# ran. Exactly one literal default (180, this path's own) now.
+MCP_TIMEOUT = int(os.getenv("ARGUS_MCP_TIMEOUT") or os.getenv("BLENDER_MCP_TIMEOUT") or "180")
+
+# The live server does `exec()` on whatever it receives over this socket, so it must
+# never accept a payload without proof the sender is this same ARGUS process (or one
+# that was told the token out of band). setdefault() both generates a fresh token
+# once per process AND writes it into os.environ, so `ensure_mcp_server()`'s
+# `env=dict(os.environ)` Popen call below hands it to the launched Blender process
+# automatically — no separate plumbing needed. Set ARGUS_MCP_TOKEN yourself to pin a
+# token (e.g. to talk to an already-running third-party BlenderMCP-compatible addon
+# that was configured with the same value).
+MCP_TOKEN = os.environ.setdefault("ARGUS_MCP_TOKEN", secrets.token_hex(32))
 
 
 class McpRepairClass(str, Enum):
@@ -185,11 +202,20 @@ def _normalize_addon_response(response: dict) -> dict:
 
 
 def execute_blender_code(code: str):
+    """Every caller today already runs generated code through
+    core.llm.validate_generated_script (which calls check_script_safety) before
+    it gets here — this is defense-in-depth for the live-exec path specifically,
+    not the primary gate, so a future caller that skips that upstream validation
+    doesn't silently get an unchecked exec() on a persistent GUI process."""
+    safe, reason = check_script_safety(code)
+    if not safe:
+        return {"success": False, "error": f"blocked by script safety check: {reason}"}
 
     client = McpClient()
 
     response = client.send({
         "type": "execute_code",
+        "token": MCP_TOKEN,
         "params": {
             "code": code,
         },
@@ -223,6 +249,7 @@ import traceback
 
 HOST = os.environ.get("ARGUS_MCP_HOST", "127.0.0.1")
 PORT = int(os.environ.get("ARGUS_MCP_PORT", "9876"))
+TOKEN = os.environ.get("ARGUS_MCP_TOKEN", "")
 _q = queue.Queue()
 
 
@@ -263,6 +290,8 @@ def _accept_loop(srv):
 
 
 def _handle(payload):
+    if not TOKEN or payload.get("token") != TOKEN:
+        return {"success": False, "error": "unauthorized"}
     if payload.get("type") != "execute_code":
         return {"success": False, "error": "unknown_command"}
     code = payload.get("params", {}).get("code", "")
@@ -567,46 +596,3 @@ def run_argus_mcp_validation():
 
         raw_response=stdout,
     )
-
-
-def build_repair_context(mcp_result):
-
-    return textwrap.dedent(f"""
-    MCP VALIDATION REPORT
-
-    REPAIR CLASS:
-    {mcp_result.repair_class.value}
-
-    SEVERITY:
-    {mcp_result.severity}
-
-    TRIANGLES:
-    {mcp_result.triangle_count}
-
-    TRI FACES:
-    {mcp_result.tri_faces}
-
-    QUAD FACES:
-    {mcp_result.quad_faces}
-
-    N-GONS:
-    {mcp_result.ngon_count}
-
-    OPEN EDGES:
-    {mcp_result.open_edges}
-
-    MANIFOLD ERRORS:
-    {mcp_result.manifold_errors}
-
-    ISOLATED VERTS:
-    {mcp_result.isolated_verts}
-
-    FLOATING OBJECTS:
-    {mcp_result.floating_components}
-
-    GROUNDED:
-    {mcp_result.grounded}
-
-    ERRORS:
-    {mcp_result.errors}
-    """).strip()

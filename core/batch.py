@@ -97,6 +97,13 @@ def run_batch(
     def _run_one(job_id: int, prompt: str) -> dict:
         prefix = f"[BATCH {job_id + 1}/{len(prompts)}]"
         _safe_print(f"\n{prefix} Starting: {prompt[:70]}")
+        # Each job gets its own cancel scope, so cancelling one does not stop the
+        # others. This is what made --workers > 1 unsafe: every job shared one
+        # process-wide cancel flag, and since core/blender.py now terminates the
+        # Blender subprocess on that signal, a single cancel would have killed
+        # every concurrent job's render mid-write.
+        from core.cancel import new_scope
+        new_scope()
         t0 = time.monotonic()
         error = ""
         try:
