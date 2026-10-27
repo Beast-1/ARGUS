@@ -3320,7 +3320,8 @@ def _score_visual_checklist(
     from core.checklist import build_checklist, summarize_results
 
     spec = spec or part_data.get("build_spec")
-    checks = build_checklist(part_data, spec)
+    full_cov = os.environ.get("ARGUS_CHECKLIST_FULL", "0") != "0"
+    checks = build_checklist(part_data, spec, full_coverage=full_cov)
     if len(checks) < 4:
         return None
 

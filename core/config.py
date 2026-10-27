@@ -103,6 +103,12 @@ SETTINGS: tuple[Setting, ...] = (
        "core/prompt.py. Registered so the discrepancy is documented, not hidden."),
     _s("ARGUS_CHECKLIST", "1", "quality", "1 = use the checklist critic when scoring."),
     _s("ARGUS_CRITIC_VOTES", "1", "quality", "Critic votes per review round."),
+    _s("ARGUS_CHECKLIST_FULL", "0", "quality",
+       "1 = ask the checklist critic about every part and every join, dropping "
+       "the legacy caps (first 10 parts; 14 combined part+join checks). "
+       "Measurement only: visual_score is still computed over the legacy "
+       "subset, so pipeline behaviour is unchanged and both rubrics are scored "
+       "from a single vision call."),
     _s("ARGUS_TWO_STAGE", "1", "quality", "1 = two-stage (brief then plan) planning."),
     _s("ARGUS_MULTIVIEW_REF", "1", "quality", "1 = score against a multi-view render grid."),
 

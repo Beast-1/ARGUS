@@ -225,6 +225,49 @@ def make_run_dirs(run_id: str):
     return dirs
 
 
+def _append_qa_history(script_dir, stage: str, iteration, vqa, *, adopted=None) -> None:
+    """Append one scoring event to <run>/reports/qa_history.jsonl.
+
+    The judge already produces a per-check verdict map every round, and the
+    pipeline kept only the aggregate score -- which makes "did this repair fix
+    one part and break another" unanswerable after the fact. Writing the raw
+    verdicts means any aggregation rule, including one chosen later, can be
+    recomputed offline without re-running the asset.
+
+    Telemetry only: never raises, never affects the run.
+    """
+    if not vqa or vqa.get("skipped"):
+        return
+    try:
+        import json as _json
+        out = Path(script_dir).parent / "reports" / "qa_history.jsonl"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        record = {
+            "stage": stage,
+            "iteration": iteration,
+            "adopted": adopted,
+            "visual_score": vqa.get("visual_score"),
+            "score_full": vqa.get("score_full"),
+            "score_balanced": vqa.get("score_balanced"),
+            "score_strict": vqa.get("score_strict"),
+            "score_strict_balanced": vqa.get("score_strict_balanced"),
+            "score_legacy_subset": vqa.get("score_legacy_subset"),
+            "coverage": vqa.get("coverage"),
+            "legacy_coverage": vqa.get("legacy_coverage"),
+            "checks_asked": vqa.get("checks_asked"),
+            "checks_answered": vqa.get("checks_answered"),
+            "unanswered": vqa.get("unanswered"),
+            "per_category": vqa.get("per_category"),
+            "answers": vqa.get("answers"),
+            "missing_parts": vqa.get("missing_parts"),
+            "failed_joins": vqa.get("failed_joins"),
+        }
+        with out.open("a", encoding="utf-8") as fh:
+            fh.write(_json.dumps(record) + "\n")
+    except Exception as _hist_exc:  # noqa: BLE001 -- telemetry must never kill a run
+        logger.warning("[QA_HISTORY] write failed: %s", _hist_exc)
+
+
 def save_script(
     script_dir: Path,
     name: str,
@@ -840,6 +883,7 @@ def run_best_of_n_generation(
     best_score = int(best_vqa.get("visual_score", -1)) if not best_vqa.get("skipped") else -1
     best_script, best_path, best_result = script, script_path, result
     _best_files = _BestFiles(best_result)
+    _append_qa_history(script_dir, "best_of_n", 1, best_vqa, adopted=True)
     print(f"Candidate 1/{n_candidates}: score {best_score}/10")
 
     from core.prompt import build_object_prompt as _bop
@@ -888,6 +932,7 @@ def run_best_of_n_generation(
         print(f"Candidate {_i}/{n_candidates}: score {cand_score}/10")
 
         _adopt, _why = _accept_candidate(cand_score, best_score, cand_result, best_result)
+        _append_qa_history(script_dir, "best_of_n", _i, cand_vqa, adopted=_adopt)
         if _adopt:
             print(f"Candidate {_i}: ADOPTED ({cand_score} > {best_score})")
             best_script, best_path, best_result = cand_script, cand_path, cand_result
@@ -945,6 +990,7 @@ def run_visual_improvement_loop(
         return best_script, best_path, best_result, best_vqa
 
     best_score = int(best_vqa.get("visual_score", -1))
+    _append_qa_history(script_dir, "visual_initial", 0, best_vqa, adopted=True)
     print(f"Visual score      : {best_score}/10 ({view_kind})")
     if best_vqa.get("feedback"):
         print(f"Feedback          : {best_vqa['feedback']}")
@@ -1046,6 +1092,7 @@ def run_visual_improvement_loop(
 
         _accept, _reject_why = _accept_candidate(
             cand_score, best_score, cand_result, best_result)
+        _append_qa_history(script_dir, "visual_repair", _it, cand_vqa, adopted=_accept)
         if _accept:
             print("Visual improve    : candidate is better → adopting")
             best_script, best_path, best_result = improved, cand_path, cand_result
@@ -1467,6 +1514,10 @@ def run_pipeline(
             _regen_vqa, _, _regen_grid = _score_render(_regen_result.glb_path, prompt, part_data,
                                                        reference_image=reference_image)
             _regen_score = int(_regen_vqa.get("visual_score", -1)) if not _regen_vqa.get("skipped") else -1
+            # adopted=None: a regeneration's fate is settled further down, after
+            # its own visual loop runs, so it is left unrecorded rather than guessed.
+            _append_qa_history(run_dirs["scripts"], "outer_regen", _outer_it,
+                               _regen_vqa, adopted=None)
             print(f"Full regen {_outer_it}     : score {_regen_score}/10")
 
             _regen_final = run_visual_improvement_loop(
@@ -1654,6 +1705,15 @@ def run_pipeline(
             "topology_severity": getattr(mcp_result, "severity", "clean"),
             "topology_grounded": getattr(mcp_result, "grounded", True),
         }
+        # Measurement fields: how much of the rubric the judge actually answered,
+        # and the same verdicts scored under the corrected rubrics. Recorded so a
+        # finished asset can be re-scored without re-rendering; read by nothing.
+        if vqa and not vqa.get("skipped"):
+            for _k in ("checks_asked", "checks_answered", "coverage",
+                       "legacy_coverage", "score_full", "score_balanced",
+                       "score_strict", "score_strict_balanced",
+                       "score_legacy_subset", "per_category", "failed_joins"):
+                manifest[_k] = vqa.get(_k)
         Path(result.glb_path).with_name("manifest.json").write_text(
             _json.dumps(manifest, indent=2), encoding="utf-8")
     except Exception as _manifest_exc:  # noqa: BLE001
